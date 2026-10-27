@@ -267,6 +267,8 @@ const contentHash = (d: Pick<CriterionDraft, 'title' | 'description' | 'precondi
 const tokens = (s: string) => new Set(normalizeWithMap(s).norm.split(/[^a-zäöüß0-9]+/).filter((t) => t.length > 3));
 const jaccard = (a: Set<string>, b: Set<string>) => { let i = 0; for (const x of a) if (b.has(x)) i++; return i / (a.size + b.size - i || 1); };
 
+const DERIVE_BUDGET_MS = Number(process.env.DERIVE_BUDGET_MS ?? 6 * 60 * 1000);
+
 export type DeriveMode = 'uebernahme' | 'ki' | 'demo';
 
 export interface DeriveResult {
@@ -315,20 +317,22 @@ export async function deriveFromSource(o: DeriveOpts): Promise<DeriveResult> {
     const existing = (await o.db.query('select slug from criteria where org_id = $1', [o.orgId])).rows.map((r) => r.slug as string);
     // Wenige, große Abschnitte statt vieler kleiner; nur die thematisch ergiebigsten (Reihenfolge des Dokuments bleibt). Mehrere Anfragen laufen parallel.
     const score = (c: string) => (c.match(/Vorerkrank/gi)?.length ?? 0) * 3 + (c.match(/Abgabegrund|DBVO/gi)?.length ?? 0) * 2 + (c.match(/Arbeitsunfähig/gi)?.length ?? 0);
-    const all = chunkText(sv.extracted_text, sv.locators, 12000).map((c, idx) => ({ c, idx, sc: score(c) })).filter((x) => x.sc > 0);
-    const chunks = all.sort((x, y) => y.sc - x.sc).slice(0, 8).sort((x, y) => x.idx - y.idx).map((x) => x.c);
+    const all = chunkText(sv.extracted_text, sv.locators, 7000).map((c, idx) => ({ c, idx, sc: score(c) })).filter((x) => x.sc > 0);
+    const chunks = all.sort((x, y) => y.sc - x.sc).slice(0, 10).sort((x, y) => x.idx - y.idx).map((x) => x.c);
     const baseSlugs = [...existing, ...candidates.map((c) => c.draft.slug)];
-    let doneN = 0; let lastErr: unknown = null; let failed = 0;
+    let doneN = 0; let lastErr: unknown = null; let failed = 0; let skipped = 0; const startedAt = Date.now();
     const results: { i: number; rawData: any; completion: any }[] = [];
     let next = 0;
     const worker = async () => {
       while (next < chunks.length) {
+        // Gesamtzeit begrenzen: bereits fertige Abschnitte bleiben erhalten, der Rest wird als offen gemeldet.
+        if (Date.now() - startedAt > DERIVE_BUDGET_MS) { skipped += chunks.length - next; next = chunks.length; break; }
         const i = next++;
         try {
           const { data: rawData, completion } = await o.hai.completeJson('kriterien-ableitung', PROMPTS.deriveCriteria, aiDeriveSchema, [
             { role: 'system', content: deriveCriteriaSystem('Vorerkrankungsanfrage (Abgabegrund 41, Datenbaustein DBVO)') },
             { role: 'user', content: deriveCriteriaUser(title, sv.version_label, chunks[i], baseSlugs) },
-          ], 6000, o.orgId);
+          ], 5000, o.orgId);
           results.push({ i, rawData, completion });
         } catch (e) {
           if (e instanceof AiError && e.state === 'nicht_konfiguriert') throw e;
@@ -339,8 +343,9 @@ export async function deriveFromSource(o: DeriveOpts): Promise<DeriveResult> {
       }
     };
     await o.progress?.(0, chunks.length, `KI analysiert ${chunks.length} Abschnitte …`);
-    await Promise.all(Array.from({ length: Math.min(3, chunks.length) }, worker));
+    await Promise.all(Array.from({ length: Math.min(4, chunks.length) }, worker));
     if (chunks.length && failed === chunks.length) throw lastErr;
+    if (skipped) fehlend.push(`${skipped} Abschnitte wurden wegen der Zeitgrenze (${Math.round(DERIVE_BUDGET_MS / 60000)} Min.) nicht mehr analysiert. Bitte die Ableitung erneut starten – bereits vorhandene Kriterien bleiben erhalten.`);
     if (failed) fehlend.push(`${failed} von ${chunks.length} Abschnitten konnten von der KI nicht ausgewertet werden (${lastErr instanceof Error ? lastErr.message : 'Fehler'}). Bitte die Ableitung später erneut starten.`);
     results.sort((x, y) => x.i - y.i);
     for (const { rawData, completion } of results) {

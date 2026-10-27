@@ -436,6 +436,21 @@ describe('Hessian AI', () => {
     expect(seen!.body.messages[0].role).toBe('user');
   });
 
+  it('Hessian/GLM: Denkmodus wird abgeschaltet; lehnt das Gateway den Parameter ab, wird ohne ihn wiederholt', async () => {
+    const bodies: any[] = [];
+    const fakeFetch = (async (_u: string, init: any) => {
+      const b = JSON.parse(init.body); bodies.push(b);
+      if (b.chat_template_kwargs && bodies.length === 1) return new Response('{"error":"unknown field"}', { status: 400 });
+      return new Response(JSON.stringify({ model: 'vllm/GLM-Flash:Latest', choices: [{ message: { content: 'Ja.' }, finish_reason: 'stop' }], usage: {} }), { status: 200 });
+    }) as any;
+    const h = new HaiClient({ ...c.cfg, hai: { ...c.cfg.hai, apiKey: 'sk-bf-test', model: 'vllm/GLM-Flash:Latest' } }, c.db, fakeFetch);
+    expect(h.provider).toBe('hessian');
+    expect((await h.testConnection()).state).toBe('verbunden');
+    expect(bodies[0].chat_template_kwargs).toEqual({ enable_thinking: false });
+    expect(bodies[1].chat_template_kwargs).toBeUndefined();
+    await h.testConnection(); expect(bodies[2].chat_template_kwargs).toBeUndefined(); // gemerkt
+  });
+
   it('Gemini-/Groq-Schlüssel nutzen die jeweilige OpenAI-kompatible Schnittstelle', async () => {
     const urls: string[] = [];
     const fakeFetch = (async (url: string) => { urls.push(url); return new Response(JSON.stringify({ model: 'm', choices: [{ message: { content: 'Ja.' }, finish_reason: 'stop' }], usage: {} }), { status: 200 }); }) as any;

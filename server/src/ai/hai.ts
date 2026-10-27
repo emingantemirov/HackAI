@@ -63,6 +63,9 @@ export class HaiClient {
     const k = this.apiKey ?? '';
     return k.startsWith('sk-ant-') ? 'claude' : k.startsWith('AIza') || k.startsWith('AQ.') ? 'gemini' : k.startsWith('gsk_') ? 'groq' : 'hessian';
   }
+  /** GLM-Modelle „denken“ standardmäßig lange. Für strukturierte Ableitung ist das unnötig und langsam → abschalten (falls vom Gateway abgelehnt, einmalig deaktiviert). */
+  private noThinkRejected = false;
+  private get noThink(): boolean { return this.provider === 'hessian' && /glm/i.test(this.model) && !this.noThinkRejected && process.env.HAI_THINKING !== 'on'; }
   private storedModel: string | null = null;
   get model(): string {
     if (this.storedModel) return this.storedModel;
@@ -102,7 +105,7 @@ export class HaiClient {
         headers: claude ? { 'x-api-key': this.apiKey!, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' } : { Authorization: `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(claude
           ? { model: this.model, max_tokens: Math.min(maxTokens, 16000), temperature: 0.1, ...(sys ? { system: sys } : {}), messages: messages.filter((m) => m.role !== 'system') }
-          : { model: this.model, messages, max_tokens: maxTokens, temperature: 0.1 }),
+          : { model: this.model, messages, max_tokens: maxTokens, temperature: 0.1, ...(this.noThink ? { chat_template_kwargs: { enable_thinking: false } } : {}) }),
         signal: ctrl.signal,
       });
     } catch (e: any) {
@@ -110,6 +113,11 @@ export class HaiClient {
       throw new AiError('dienst_nicht_erreichbar', `Die KI ist nicht erreichbar (${e?.cause?.code ?? e?.message ?? 'Netzwerkfehler'}).`, true);
     } finally {
       clearTimeout(timer);
+    }
+    if ((res.status === 400 || res.status === 422) && this.noThink) {
+      // Gateway kennt den Parameter nicht → ohne ihn erneut versuchen (und merken).
+      this.noThinkRejected = true;
+      return this.request(messages, maxTokens, signal);
     }
     if (res.status === 401 || res.status === 403) {
       const detail = (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160);
