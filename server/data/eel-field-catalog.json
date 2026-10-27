@@ -1,0 +1,2636 @@
+{
+ "generated_from": "Verfahrensbeschreibung DTA EEL Version 13.4 (pdftotext -layout)",
+ "note": "Maschinell extrahiert; vor fachlicher Nutzung prüfen. Feldpositionen 001-004 jedes Bausteins = Kennung.",
+ "blocks": {
+  "DSLW": [
+   {
+    "block": "DSLW",
+    "start": 5,
+    "length": 5,
+    "end": 9,
+    "type": "an",
+    "kind": "M",
+    "name": "VERFAHREN",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 35
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DSLW",
+    "start": 10,
+    "length": 15,
+    "end": 24,
+    "type": "an",
+    "kind": "M",
+    "name": "ABSENDERNUMMER",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 35
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DSLW",
+    "start": 25,
+    "length": 15,
+    "end": 39,
+    "type": "an",
+    "kind": "M",
+    "name": "EMPFAENGERNUMMER",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 36
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DSLW",
+    "start": 40,
+    "length": 2,
+    "end": 41,
+    "type": "n",
+    "kind": "M",
+    "name": "VERSION-NR",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 38
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DSLW",
+    "start": 42,
+    "length": 20,
+    "end": 61,
+    "type": "n",
+    "kind": "M",
+    "name": "DATUM-ERSTELLUNG",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 38
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DSLW",
+    "start": 62,
+    "length": 1,
+    "end": 62,
+    "type": "n",
+    "kind": "M",
+    "name": "FEHLER-KENNZ",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 39
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DSLW",
+    "start": 63,
+    "length": 1,
+    "end": 63,
+    "type": "n",
+    "kind": "M",
+    "name": "FEHLER-ANZAHL",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 39
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DSLW",
+    "start": 64,
+    "length": 12,
+    "end": 75,
+    "type": "an",
+    "kind": "m",
+    "name": "VSNR",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 39
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DSLW",
+    "start": 76,
+    "length": 8,
+    "end": 83,
+    "type": "n",
+    "kind": "M",
+    "name": "GEBURTSDAT",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 39
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DSLW",
+    "start": 84,
+    "length": 15,
+    "end": 98,
+    "type": "an",
+    "kind": "M",
+    "name": "BBNR-VU",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 40
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DSLW",
+    "start": 99,
+    "length": 36,
+    "end": 134,
+    "type": "an",
+    "kind": "M",
+    "name": "DATENSATZ-ID",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 40
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DSLW",
+    "start": 135,
+    "length": 7,
+    "end": 141,
+    "type": "an",
+    "kind": "m",
+    "name": "PRODUKT-IDENTIFIER",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 40
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DSLW",
+    "start": 142,
+    "length": 8,
+    "end": 149,
+    "type": "an",
+    "kind": "m",
+    "name": "MODIFIKATIONS-IDENTIFIER",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 41
+    },
+    "curated_name": true
+   },
+   {
+    "block": "DSLW",
+    "start": 150,
+    "length": 20,
+    "end": 169,
+    "type": "an",
+    "kind": "m",
+    "name": "DATUM-VERARBEITUNG",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 41
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DSLW",
+    "start": 170,
+    "length": 15,
+    "end": 184,
+    "type": "an",
+    "kind": "m",
+    "name": "BBNR-KK",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 41
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DSLW",
+    "start": 185,
+    "length": 15,
+    "end": 199,
+    "type": "an",
+    "kind": "m",
+    "name": "BBNR-ABRECHNUNGSSTELLE",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 42
+    },
+    "curated_name": true
+   },
+   {
+    "block": "DSLW",
+    "start": 200,
+    "length": 1,
+    "end": 200,
+    "type": "an",
+    "kind": "M",
+    "name": "RUECKMELDUNG-ENTGELTERSATZLEISTUNG",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 42
+    },
+    "curated_name": true
+   },
+   {
+    "block": "DSLW",
+    "start": 201,
+    "length": 2,
+    "end": 202,
+    "type": "n",
+    "kind": "M",
+    "name": "ABGABEGRUND",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 42
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DSLW",
+    "start": 203,
+    "length": 2,
+    "end": 204,
+    "type": "n",
+    "kind": "m",
+    "name": "KORR-ABGABEGRUND",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 47
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DSLW",
+    "start": 205,
+    "length": 1,
+    "end": 205,
+    "type": "n",
+    "kind": "M",
+    "name": "ABRECHNUNGSPROGRAMM",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 48
+    },
+    "curated_name": true
+   },
+   {
+    "block": "DSLW",
+    "start": 206,
+    "length": 19,
+    "end": 224,
+    "type": "opaque",
+    "kind": "m",
+    "name": "NICHT-KOMMENTIERT-206-224",
+    "repeating": false,
+    "curated_name": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 49,
+     "quote_ref": "Von einer Kommentierung der weiteren Stellen 206 – 224 des DSLW wurde abgesehen."
+    }
+   }
+  ],
+  "DBAL": [
+   {
+    "block": "DBAL",
+    "start": 5,
+    "length": 8,
+    "end": 12,
+    "type": "n",
+    "kind": "M",
+    "name": "DATUM-AB",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 51
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAL",
+    "start": 13,
+    "length": 1,
+    "end": 13,
+    "type": "n",
+    "kind": "M",
+    "name": "AE-ERSTTAG",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 51
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAL",
+    "start": 14,
+    "length": 8,
+    "end": 21,
+    "type": "n",
+    "kind": "M",
+    "name": "DATUM-EGZBIS",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 53
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAL",
+    "start": 22,
+    "length": 8,
+    "end": 29,
+    "type": "n",
+    "kind": "m",
+    "name": "ENDE-BV-AM",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 53
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAL",
+    "start": 30,
+    "length": 8,
+    "end": 37,
+    "type": "n",
+    "kind": "m",
+    "name": "ENDE-BV-ZUM",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 54
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAL",
+    "start": 38,
+    "length": 2,
+    "end": 39,
+    "type": "n",
+    "kind": "m",
+    "name": "GRUNDBEEND",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 54
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAL",
+    "start": 40,
+    "length": 1,
+    "end": 40,
+    "type": "an",
+    "kind": "M",
+    "name": "PFLZUSCHLAG",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 55
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAL",
+    "start": 41,
+    "length": 1,
+    "end": 41,
+    "type": "n",
+    "kind": "m",
+    "name": "KINDER-UNTER-25",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 55
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAL",
+    "start": 42,
+    "length": 1,
+    "end": 42,
+    "type": "an",
+    "kind": "M",
+    "name": "ARBZEITMOD",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 56
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAL",
+    "start": 43,
+    "length": 1,
+    "end": 43,
+    "type": "n",
+    "kind": "M",
+    "name": "MM-KUG",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 57
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAL",
+    "start": 44,
+    "length": 8,
+    "end": 51,
+    "type": "n",
+    "kind": "m",
+    "name": "KUG-BEGINN",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 58
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAL",
+    "start": 52,
+    "length": 8,
+    "end": 59,
+    "type": "n",
+    "kind": "m",
+    "name": "KUG-ENDE",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 58
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAL",
+    "start": 60,
+    "length": 8,
+    "end": 67,
+    "type": "n",
+    "kind": "m",
+    "name": "LAG-BEGINN 1",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 59
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAL",
+    "start": 68,
+    "length": 8,
+    "end": 75,
+    "type": "n",
+    "kind": "m",
+    "name": "LAG-ENDE 1",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 60
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAL",
+    "start": 76,
+    "length": 8,
+    "end": 83,
+    "type": "n",
+    "kind": "m",
+    "name": "LAG-BEGINN 2",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 60
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAL",
+    "start": 84,
+    "length": 8,
+    "end": 91,
+    "type": "n",
+    "kind": "m",
+    "name": "LAG-ENDE 2",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 60
+    },
+    "curated_name": false
+   }
+  ],
+  "DBAE": [
+   {
+    "block": "DBAE",
+    "start": 5,
+    "length": 8,
+    "end": 12,
+    "type": "n",
+    "kind": "m",
+    "name": "WAEHREEL-BRUTTO",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 61
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 13,
+    "length": 8,
+    "end": 20,
+    "type": "n",
+    "kind": "m",
+    "name": "DATUM-AE-BIS",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 64
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 21,
+    "length": 8,
+    "end": 28,
+    "type": "n",
+    "kind": "M",
+    "name": "EAZ-BEGINN 1",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 64
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 29,
+    "length": 8,
+    "end": 36,
+    "type": "n",
+    "kind": "M",
+    "name": "EAZ-ENDE 1",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 69
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 37,
+    "length": 8,
+    "end": 44,
+    "type": "n",
+    "kind": "M",
+    "name": "BRUTTO-1",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 70
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 45,
+    "length": 8,
+    "end": 52,
+    "type": "n",
+    "kind": "M",
+    "name": "NETTO-1",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 73
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 53,
+    "length": 8,
+    "end": 60,
+    "type": "n",
+    "kind": "m",
+    "name": "UMGEWAE",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 77
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 61,
+    "length": 1,
+    "end": 61,
+    "type": "n",
+    "kind": "M",
+    "name": "ENTGART",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 78
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 62,
+    "length": 8,
+    "end": 69,
+    "type": "n",
+    "kind": "m",
+    "name": "BRUTTOAE",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 79
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 70,
+    "length": 8,
+    "end": 77,
+    "type": "n",
+    "kind": "m",
+    "name": "NETTOAE",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 79
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 78,
+    "length": 8,
+    "end": 85,
+    "type": "n",
+    "kind": "m",
+    "name": "EAZ-BEGINN 2",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 80
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 86,
+    "length": 8,
+    "end": 93,
+    "type": "n",
+    "kind": "m",
+    "name": "EAZ-ENDE 2",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 80
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 94,
+    "length": 8,
+    "end": 101,
+    "type": "n",
+    "kind": "m",
+    "name": "BRUTTO-2",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 81
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 102,
+    "length": 8,
+    "end": 109,
+    "type": "n",
+    "kind": "m",
+    "name": "NETTO-2",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 81
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 110,
+    "length": 8,
+    "end": 117,
+    "type": "n",
+    "kind": "m",
+    "name": "EAZ-BEGINN-3",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 81
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 118,
+    "length": 8,
+    "end": 125,
+    "type": "n",
+    "kind": "m",
+    "name": "EAZ-ENDE-3",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 81
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 126,
+    "length": 8,
+    "end": 133,
+    "type": "n",
+    "kind": "m",
+    "name": "BRUTTO-3",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 82
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 134,
+    "length": 8,
+    "end": 141,
+    "type": "n",
+    "kind": "m",
+    "name": "NETTO-3",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 82
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 142,
+    "length": 8,
+    "end": 149,
+    "type": "n",
+    "kind": "m",
+    "name": "EZKV",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 82
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 150,
+    "length": 8,
+    "end": 157,
+    "type": "n",
+    "kind": "m",
+    "name": "EZRV",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 84
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAE",
+    "start": 158,
+    "length": 8,
+    "end": 165,
+    "type": "n",
+    "kind": "m",
+    "name": "EZALV",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 84
+    },
+    "curated_name": false
+   }
+  ],
+  "DBZA": [
+   {
+    "block": "DBZA",
+    "start": 5,
+    "length": 5,
+    "end": 9,
+    "type": "n",
+    "kind": "M",
+    "name": "ANZAHL-STD",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 85
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBZA",
+    "start": 10,
+    "length": 4,
+    "end": 13,
+    "type": "n",
+    "kind": "m",
+    "name": "REG-AZ",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 85
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBZA",
+    "start": 14,
+    "length": 5,
+    "end": 18,
+    "type": "n",
+    "kind": "m",
+    "name": "MAZR-1",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 86
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBZA",
+    "start": 19,
+    "length": 8,
+    "end": 26,
+    "type": "n",
+    "kind": "m",
+    "name": "AZBEGINN-2",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 87
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBZA",
+    "start": 27,
+    "length": 8,
+    "end": 34,
+    "type": "n",
+    "kind": "m",
+    "name": "AZENDE-2",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 87
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBZA",
+    "start": 35,
+    "length": 5,
+    "end": 39,
+    "type": "n",
+    "kind": "m",
+    "name": "MAZR-2",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 88
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBZA",
+    "start": 40,
+    "length": 8,
+    "end": 47,
+    "type": "n",
+    "kind": "m",
+    "name": "AZBEGINN-3",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 88
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBZA",
+    "start": 48,
+    "length": 8,
+    "end": 55,
+    "type": "n",
+    "kind": "m",
+    "name": "AZENDE-3",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 88
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBZA",
+    "start": 56,
+    "length": 5,
+    "end": 60,
+    "type": "n",
+    "kind": "m",
+    "name": "MAZR-3",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 89
+    },
+    "curated_name": false
+   }
+  ],
+  "DBEE": [
+   {
+    "block": "DBEE",
+    "start": 5,
+    "length": 8,
+    "end": 12,
+    "type": "n",
+    "kind": "M",
+    "name": "EEL-ABAG",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 90
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBEE",
+    "start": 13,
+    "length": 8,
+    "end": 20,
+    "type": "n",
+    "kind": "M",
+    "name": "EEL-ABSV",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 91
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBEE",
+    "start": 21,
+    "length": 8,
+    "end": 28,
+    "type": "n",
+    "kind": "m",
+    "name": "EEL-ENDE",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 91
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBEE",
+    "start": 29,
+    "length": 2,
+    "end": 30,
+    "type": "n",
+    "kind": "M",
+    "name": "EEL-ENDE-GRUND",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 92
+    },
+    "curated_name": false
+   }
+  ],
+  "DBAW": [
+   {
+    "block": "DBAW",
+    "start": 5,
+    "length": 2,
+    "end": 6,
+    "type": "n",
+    "kind": "M",
+    "name": "TAGE-1",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 94
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAW",
+    "start": 7,
+    "length": 2,
+    "end": 8,
+    "type": "n",
+    "kind": "M",
+    "name": "TAGE-2",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 95
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBAW",
+    "start": 9,
+    "length": 2,
+    "end": 10,
+    "type": "n",
+    "kind": "M",
+    "name": "TAGE-3",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 95
+    },
+    "curated_name": false
+   }
+  ],
+  "DBFR": [
+   {
+    "block": "DBFR",
+    "start": 5,
+    "length": 8,
+    "end": 12,
+    "type": "n",
+    "kind": "m",
+    "name": "ENDE-BV-ZUM",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 98
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBFR",
+    "start": 13,
+    "length": 8,
+    "end": 20,
+    "type": "n",
+    "kind": "M",
+    "name": "FREIST-VOM",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 98
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBFR",
+    "start": 21,
+    "length": 8,
+    "end": 28,
+    "type": "n",
+    "kind": "M",
+    "name": "FREIST-BIS",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 99
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBFR",
+    "start": 29,
+    "length": 1,
+    "end": 29,
+    "type": "an",
+    "kind": "m",
+    "name": "VAE-ERSTTAG",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 100
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBFR",
+    "start": 30,
+    "length": 2,
+    "end": 31,
+    "type": "n",
+    "kind": "m",
+    "name": "TAGE",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 101
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBFR",
+    "start": 32,
+    "length": 1,
+    "end": 32,
+    "type": "n",
+    "kind": "m",
+    "name": "KEINEFREIST",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 101
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBFR",
+    "start": 33,
+    "length": 2,
+    "end": 34,
+    "type": "n",
+    "kind": "m",
+    "name": "BEGRZFREIST",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 103
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBFR",
+    "start": 35,
+    "length": 8,
+    "end": 42,
+    "type": "n",
+    "kind": "m",
+    "name": "BEZFREIST-VOM",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 103
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBFR",
+    "start": 43,
+    "length": 8,
+    "end": 50,
+    "type": "n",
+    "kind": "m",
+    "name": "BEZFREIST-BIS",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 104
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBFR",
+    "start": 51,
+    "length": 2,
+    "end": 52,
+    "type": "n",
+    "kind": "m",
+    "name": "BEZFREIST-JAHR",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 104
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBFR",
+    "start": 53,
+    "length": 8,
+    "end": 60,
+    "type": "n",
+    "kind": "m",
+    "name": "FREISTBRUTTO",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 105
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBFR",
+    "start": 61,
+    "length": 8,
+    "end": 68,
+    "type": "n",
+    "kind": "m",
+    "name": "FREISTNETTO",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 107
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBFR",
+    "start": 69,
+    "length": 1,
+    "end": 69,
+    "type": "an",
+    "kind": "m",
+    "name": "FREISTEZ",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 112
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBFR",
+    "start": 70,
+    "length": 1,
+    "end": 70,
+    "type": "n",
+    "kind": "m",
+    "name": "KINDER-UNTER-25",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 112
+    },
+    "curated_name": false
+   }
+  ],
+  "DBUN": [
+   {
+    "block": "DBUN",
+    "start": 5,
+    "length": 20,
+    "end": 24,
+    "type": "an",
+    "kind": "m",
+    "name": "UNFALLAZ",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 113
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBUN",
+    "start": 25,
+    "length": 8,
+    "end": 32,
+    "type": "n",
+    "kind": "m",
+    "name": "V-TAG",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 113
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBUN",
+    "start": 33,
+    "length": 15,
+    "end": 47,
+    "type": "n",
+    "kind": "m",
+    "name": "IKUV",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 113
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBUN",
+    "start": 48,
+    "length": 8,
+    "end": 55,
+    "type": "n",
+    "kind": "m",
+    "name": "ZUSCHL-1",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 113
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBUN",
+    "start": 56,
+    "length": 8,
+    "end": 63,
+    "type": "n",
+    "kind": "m",
+    "name": "ZUSCHL-2",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 114
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBUN",
+    "start": 64,
+    "length": 8,
+    "end": 71,
+    "type": "n",
+    "kind": "m",
+    "name": "ZUSCHL-3",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 114
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBUN",
+    "start": 72,
+    "length": 8,
+    "end": 79,
+    "type": "n",
+    "kind": "m",
+    "name": "FREISTZUSCHL",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 115
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBUN",
+    "start": 80,
+    "length": 8,
+    "end": 87,
+    "type": "n",
+    "kind": "m",
+    "name": "EZUV",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 115
+    },
+    "curated_name": false
+   }
+  ],
+  "DBMU": [
+   {
+    "block": "DBMU",
+    "start": 5,
+    "length": 8,
+    "end": 12,
+    "type": "n",
+    "kind": "M",
+    "name": "SCHUTZFR-BEGINN",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 117
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 13,
+    "length": 8,
+    "end": 20,
+    "type": "n",
+    "kind": "M",
+    "name": "BV-BEGINN",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 118
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 21,
+    "length": 8,
+    "end": 28,
+    "type": "n",
+    "kind": "m",
+    "name": "LETZTTAG",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 118
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 29,
+    "length": 8,
+    "end": 36,
+    "type": "n",
+    "kind": "m",
+    "name": "ENDE-BV-AM",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 119
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 37,
+    "length": 8,
+    "end": 44,
+    "type": "n",
+    "kind": "m",
+    "name": "ENDE-BV-ZUM",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 119
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 45,
+    "length": 2,
+    "end": 46,
+    "type": "n",
+    "kind": "m",
+    "name": "BV-GEKUEND",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 120
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 47,
+    "length": 8,
+    "end": 54,
+    "type": "n",
+    "kind": "m",
+    "name": "WAEHREEL-NETTO",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 121
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 55,
+    "length": 8,
+    "end": 62,
+    "type": "n",
+    "kind": "m",
+    "name": "DATUM-AE-BIS",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 122
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 63,
+    "length": 2,
+    "end": 64,
+    "type": "n",
+    "kind": "m",
+    "name": "FEHLZEIT",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 122
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 65,
+    "length": 1,
+    "end": 65,
+    "type": "an",
+    "kind": "M",
+    "name": "AE-UEBER",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 123
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 66,
+    "length": 1,
+    "end": 66,
+    "type": "n",
+    "kind": "M",
+    "name": "ENTGART",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 124
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 67,
+    "length": 8,
+    "end": 74,
+    "type": "n",
+    "kind": "m",
+    "name": "BEGINN-1",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 125
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 75,
+    "length": 8,
+    "end": 82,
+    "type": "n",
+    "kind": "m",
+    "name": "ENDE-1",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 127
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 83,
+    "length": 5,
+    "end": 87,
+    "type": "n",
+    "kind": "m",
+    "name": "BEZAZ-1",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 127
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 88,
+    "length": 5,
+    "end": 92,
+    "type": "n",
+    "kind": "m",
+    "name": "MASTD-1",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 128
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 93,
+    "length": 5,
+    "end": 97,
+    "type": "n",
+    "kind": "m",
+    "name": "AZ-UNENT-STD-1",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 128
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 98,
+    "length": 2,
+    "end": 99,
+    "type": "n",
+    "kind": "m",
+    "name": "AZ-UNENT-TAGE-1",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 129
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 100,
+    "length": 5,
+    "end": 104,
+    "type": "n",
+    "kind": "m",
+    "name": "AZ-ENTSCH-STD-1",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 129
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 105,
+    "length": 2,
+    "end": 106,
+    "type": "n",
+    "kind": "m",
+    "name": "AZ-ENTSCH-TAGE-1",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 130
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 107,
+    "length": 8,
+    "end": 114,
+    "type": "n",
+    "kind": "m",
+    "name": "NETTO-1",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 130
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBMU",
+    "start": 211,
+    "length": 4,
+    "end": 214,
+    "type": "n",
+    "kind": "m",
+    "name": "AZ-WOECH",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 132
+    },
+    "curated_name": false
+   }
+  ],
+  "DBVO": [
+   {
+    "block": "DBVO",
+    "start": 5,
+    "length": 1,
+    "end": 5,
+    "type": "n",
+    "kind": "M",
+    "name": "GRUNDAV",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 136
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBVO",
+    "start": 6,
+    "length": 8,
+    "end": 13,
+    "type": "n",
+    "kind": "M",
+    "name": "AU-AB-AG",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 136
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBVO",
+    "start": 14,
+    "length": 8,
+    "end": 21,
+    "type": "n",
+    "kind": "m",
+    "name": "AU-AB-SV",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 136
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBVO",
+    "start": 22,
+    "length": 1,
+    "end": 22,
+    "type": "n",
+    "kind": "m",
+    "name": "KZ-AK-AU",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 137
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBVO",
+    "start": 23,
+    "length": 8,
+    "end": 30,
+    "type": "n",
+    "kind": "M",
+    "name": "12-MONATSFRIST-AB",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 138
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBVO",
+    "start": 31,
+    "length": 2,
+    "end": 32,
+    "type": "n",
+    "kind": "M",
+    "name": "ANZAHL-AU",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 138
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBVO",
+    "start": 33,
+    "length": 8,
+    "end": 40,
+    "type": "n",
+    "kind": "M",
+    "name": "BEGINN-AU-\"nn\"",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 139
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBVO",
+    "start": 41,
+    "length": 8,
+    "end": 48,
+    "type": "n",
+    "kind": "M",
+    "name": "ENDE-AU-\"nn\"",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 140
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBVO",
+    "start": 49,
+    "length": 1,
+    "end": 49,
+    "type": "n",
+    "kind": "M",
+    "name": "KZ-NACHWEIS-\"NN\"",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 141
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBVO",
+    "start": 50,
+    "length": 8,
+    "end": 57,
+    "type": "n",
+    "kind": "m",
+    "name": "TEIL-NACHWEIS-AU-BEGINN-\"nn\"",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 142
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBVO",
+    "start": 58,
+    "length": 8,
+    "end": 65,
+    "type": "n",
+    "kind": "m",
+    "name": "TEIL-NACHWEIS-AU-ENDE-\"nn\"",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 143
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBVO",
+    "start": 66,
+    "length": 1,
+    "end": 66,
+    "type": "n",
+    "kind": "M",
+    "name": "KZ-AU-\"NN\"",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 143
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBVO",
+    "start": 67,
+    "length": 8,
+    "end": 74,
+    "type": "n",
+    "kind": "m",
+    "name": "TEIL-ANR-AU-BEGINN-\"nn\"",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 145
+    },
+    "curated_name": true
+   },
+   {
+    "block": "DBVO",
+    "start": 75,
+    "length": 8,
+    "end": 82,
+    "type": "n",
+    "kind": "m",
+    "name": "TEIL-ANR-AU-ENDE-\"nn\"",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 146
+    },
+    "curated_name": false
+   }
+  ],
+  "DBHE": [
+   {
+    "block": "DBHE",
+    "start": 5,
+    "length": 8,
+    "end": 12,
+    "type": "n",
+    "kind": "M",
+    "name": "ZAHL-BEGINN",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 147
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBHE",
+    "start": 13,
+    "length": 8,
+    "end": 20,
+    "type": "n",
+    "kind": "m",
+    "name": "EEL-BRUTTO",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 149
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBHE",
+    "start": 21,
+    "length": 8,
+    "end": 28,
+    "type": "n",
+    "kind": "M",
+    "name": "EEL-NETTO",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 149
+    },
+    "curated_name": false
+   }
+  ],
+  "DBBE": [
+   {
+    "block": "DBBE",
+    "start": 5,
+    "length": 8,
+    "end": 12,
+    "type": "n",
+    "kind": "M",
+    "name": "ZAHL-BEGINN",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 150
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBBE",
+    "start": 13,
+    "length": 8,
+    "end": 20,
+    "type": "n",
+    "kind": "M",
+    "name": "BEITRPFL-BRUTTO",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 151
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBBE",
+    "start": 21,
+    "length": 8,
+    "end": 28,
+    "type": "n",
+    "kind": "M",
+    "name": "BEITRPFL-NETTO",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 151
+    },
+    "curated_name": false
+   }
+  ],
+  "DBLT": [
+   {
+    "block": "DBLT",
+    "start": 5,
+    "length": 8,
+    "end": 12,
+    "type": "n",
+    "kind": "M",
+    "name": "BV-SEIT",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 152
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBLT",
+    "start": 13,
+    "length": 8,
+    "end": 20,
+    "type": "n",
+    "kind": "M",
+    "name": "BV-BIS",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 152
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBLT",
+    "start": 21,
+    "length": 30,
+    "end": 50,
+    "type": "an",
+    "kind": "m",
+    "name": "BV-ALS",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 152
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBLT",
+    "start": 51,
+    "length": 1,
+    "end": 51,
+    "type": "an",
+    "kind": "M",
+    "name": "AUSBVERH",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 153
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBLT",
+    "start": 52,
+    "length": 1,
+    "end": 52,
+    "type": "an",
+    "kind": "m",
+    "name": "VORER",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 153
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBLT",
+    "start": 53,
+    "length": 6,
+    "end": 58,
+    "type": "n",
+    "kind": "m",
+    "name": "VWL",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 153
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBLT",
+    "start": 59,
+    "length": 8,
+    "end": 66,
+    "type": "n",
+    "kind": "m",
+    "name": "BRUTTO-SB",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 154
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBLT",
+    "start": 67,
+    "length": 8,
+    "end": 74,
+    "type": "n",
+    "kind": "m",
+    "name": "NETTO-SB",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 154
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBLT",
+    "start": 76,
+    "length": 1,
+    "end": 76,
+    "type": "an",
+    "kind": "m",
+    "name": "RECHTSKREIS",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 155
+    },
+    "curated_name": false
+   }
+  ],
+  "DBSF": [
+   {
+    "block": "DBSF",
+    "start": 5,
+    "length": 8,
+    "end": 12,
+    "type": "n",
+    "kind": "m",
+    "name": "AU-BORD",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 156
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBSF",
+    "start": 13,
+    "length": 8,
+    "end": 20,
+    "type": "n",
+    "kind": "m",
+    "name": "AU-INLAND",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 156
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBSF",
+    "start": 21,
+    "length": 2,
+    "end": 22,
+    "type": "n",
+    "kind": "m",
+    "name": "U-ANSPRUCH",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 156
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBSF",
+    "start": 23,
+    "length": 8,
+    "end": 30,
+    "type": "n",
+    "kind": "m",
+    "name": "VERLAENG-VON",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 156
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBSF",
+    "start": 31,
+    "length": 8,
+    "end": 38,
+    "type": "n",
+    "kind": "m",
+    "name": "VERLAENG-BIS",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 157
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBSF",
+    "start": 39,
+    "length": 4,
+    "end": 42,
+    "type": "n",
+    "kind": "M",
+    "name": "KZDHEU",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 157
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBSF",
+    "start": 43,
+    "length": 8,
+    "end": 50,
+    "type": "n",
+    "kind": "M",
+    "name": "DHEU",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 157
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBSF",
+    "start": 51,
+    "length": 8,
+    "end": 58,
+    "type": "n",
+    "kind": "M",
+    "name": "HEU-NETTO",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 158
+    },
+    "curated_name": false
+   }
+  ],
+  "DBTK": [
+   {
+    "block": "DBTK",
+    "start": 45,
+    "length": 8,
+    "end": 52,
+    "type": "n",
+    "kind": "m",
+    "name": "AUFSTOCKUNGSBETRAG Aufstockungsbetrag",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 160
+    },
+    "curated_name": false
+   }
+  ],
+  "DBID": [
+   {
+    "block": "DBID",
+    "start": 5,
+    "length": 20,
+    "end": 24,
+    "type": "an",
+    "kind": "m",
+    "name": "AKTENZEICHEN-SV",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 163
+    },
+    "curated_name": true
+   },
+   {
+    "block": "DBID",
+    "start": 25,
+    "length": 20,
+    "end": 44,
+    "type": "an",
+    "kind": "m",
+    "name": "AKTENZEICHEN-VERURSACHER",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 163
+    },
+    "curated_name": true
+   },
+   {
+    "block": "DBID",
+    "start": 45,
+    "length": 36,
+    "end": 80,
+    "type": "an",
+    "kind": "m",
+    "name": "REFERENZ-ID",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 163
+    },
+    "curated_name": false
+   }
+  ],
+  "DBSD": [
+   {
+    "block": "DBSD",
+    "start": 5,
+    "length": 36,
+    "end": 40,
+    "type": "an",
+    "kind": "M",
+    "name": "DATENSATZ-ID-URSPRUNGSMELDUNG",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 165
+    },
+    "curated_name": true
+   },
+   {
+    "block": "DBSD",
+    "start": 41,
+    "length": 30,
+    "end": 70,
+    "type": "an",
+    "kind": "M",
+    "name": "VORNAME",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 165
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBSD",
+    "start": 71,
+    "length": 30,
+    "end": 100,
+    "type": "an",
+    "kind": "M",
+    "name": "FAMILIENNAME",
+    "repeating": true,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 165
+    },
+    "curated_name": false
+   },
+   {
+    "block": "DBSD",
+    "start": 101,
+    "length": 20,
+    "end": 120,
+    "type": "an",
+    "kind": "M",
+    "name": "AKTENZEICHEN-VERURSACHER",
+    "repeating": false,
+    "source": {
+     "document": "Verfahrensbeschreibung DTA EEL V13.4",
+     "sha256": "94ecfd874033615d33cd42a368a0fe9cb75acc0d7e16f18d319e42b9649e1397",
+     "page": 165
+    },
+    "curated_name": true
+   }
+  ],
+  "DBNA": [],
+  "DBAN": [],
+  "DBAP": []
+ }
+}
