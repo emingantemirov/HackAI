@@ -30,6 +30,16 @@ describe('Vereinfachter Ablauf: Sammelaktionen', () => {
     const mine = await pr.post('/api/objects/testcases/approve-batch', {}); // PR hat nichts eingereicht → darf
     expect(mine.status).toBe(200);
   });
+  it('Testfall direkt freigeben; Sammel-Freigabe ohne Einreichen', async () => {
+    const tcs = (await fb.get('/api/objects/testcases')).json.eintraege as any[];
+    const draft = tcs.find((t) => t.status === 'draft');
+    if (!draft) return; // alle schon freigegeben
+    const r = await fb.post(`/api/objects/testcases/versions/${draft.version_id}/review`, { decision: 'approved' });
+    expect(r.status, JSON.stringify(r.json)).toBe(200);
+    const b = await fb.post('/api/objects/testcases/review-batch', {});
+    expect(b.status).toBe(200);
+    expect(((await fb.get('/api/objects/testcases')).json.eintraege as any[]).filter((t) => t.status === 'approved').length).toBeGreaterThan(0);
+  });
   it('Automatische Ableitung ohne KI: Fallback ohne Fehlermeldung', async () => {
     const src = (await fb.get('/api/sources')).json.quellen[0];
     const r = await fb.post(`/api/sources/${src.id}/derive`, { mode: 'auto' });

@@ -345,6 +345,29 @@ export async function buildApp({ db, cfg, hai }: Deps): Promise<FastifyInstance>
     try { const nv = await reviseRejectedAi(db, hai, a, orgOf(a), decided.id); return { ok: true, ueberarbeitet: true, version: nv.version }; }
     catch (e: any) { return { ok: true, ueberarbeitet: false, hinweis: `Abgelehnt. Die KI-Überarbeitung ist fehlgeschlagen: ${e?.message ?? 'unbekannter Fehler'}` }; }
   });
+  // Testfälle und Berichte: erzeugte Entwürfe prüft die berechtigte Person direkt (Freigeben/Ablehnen). Das Soll-Ergebnis bleibt deterministisch; es gibt keine KI-Überarbeitung.
+  const reviewOne = async (a: any, type: 'testcase' | 'report', vid: string, decision: 'approved' | 'rejected', reason?: string, hints?: string) => {
+    if (!can(a, 'approval:decide') && !can(a, 'content:write')) throw new HttpError(403, 'FORBIDDEN', 'Für diese Entscheidung fehlt die Berechtigung.');
+    return tx(db, async (t) => {
+      const v = await getVersion(t, type, vid); if (!v || v.org_id !== orgOf(a)) throw notFound(type === 'testcase' ? 'Testfall' : 'Bericht');
+      if (decision === 'approved' && type === 'testcase') await assertBasisCurrent(t, vid);
+      if (v.status === 'draft') await submitForApproval(t, a, type, vid, submitChecks(type, t) as any, { systemDraft: true });
+      return decide(t, a, type, { versionId: vid, decision, reason, hints }, async () => { if (type === 'testcase') await refreshImpactStatus(t, orgOf(a)); }, { skipPerm: true });
+    });
+  };
+  app.post('/api/objects/:type/versions/:vid/review', async (req) => {
+    const a = staff(req); const type = OBJ[(req.params as any).type]; if (type !== 'testcase' && type !== 'report') throw notFound('Bereich');
+    const b = z.object({ decision: z.enum(['approved', 'rejected']), reason: z.string().optional(), hints: z.string().optional() }).parse(req.body);
+    await reviewOne(a, type, (req.params as any).vid, b.decision, b.reason, b.hints); return { ok: true };
+  });
+  app.post('/api/objects/:type/review-batch', async (req) => {
+    const a = staff(req); const type = OBJ[(req.params as any).type]; if (type !== 'testcase' && type !== 'report') throw notFound('Bereich');
+    const cur = await listCurrent(db, orgOf(a), type); const out = { freigegeben: 0, uebersprungen: [] as { code: string; grund: string }[] };
+    for (const r of cur.filter((x: any) => x.status === 'draft' || x.status === 'submitted')) {
+      try { await reviewOne(a, type, r.version_id, 'approved'); out.freigegeben++; } catch (e: any) { out.uebersprungen.push({ code: r.code, grund: e instanceof HttpError ? e.message : 'Nicht möglich.' }); }
+    }
+    return out;
+  });
   app.post('/api/criteria/versions/:vid/ai-revise', async (req) => { const a = staff(req); return reviseRejectedAi(db, hai, a, orgOf(a), (req.params as any).vid); });
   app.get('/api/approvals', async (req) => { const a = staff(req); const q = z.object({ art: z.enum(['criterion', 'testcase', 'report']).optional() }).parse(req.query); return { eintraege: await listApprovalQueue(db, orgOf(a), q.art) }; });
 
