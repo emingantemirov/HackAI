@@ -111,7 +111,10 @@ export class HaiClient {
     } finally {
       clearTimeout(timer);
     }
-    if (res.status === 401 || res.status === 403) throw new AiError('auth_fehlgeschlagen', 'Die Authentifizierung bei der KI ist fehlgeschlagen (Schlüssel ungültig oder ohne Berechtigung).');
+    if (res.status === 401 || res.status === 403) {
+      const detail = (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160);
+      throw new AiError('auth_fehlgeschlagen', `Die Authentifizierung bei der KI ist fehlgeschlagen (HTTP ${res.status}, Anbieter: ${this.provider}, Modell: ${this.model}). Schlüssel prüfen – er muss zum Anbieter passen.${detail ? ' Antwort: ' + detail : ''}`);
+    }
     if (res.status === 429) {
       const ra = Number(res.headers.get('retry-after'));
       const err = new AiError('dienst_nicht_erreichbar', 'Die KI-Schnittstelle begrenzt die Anfragerate (429).', true);
