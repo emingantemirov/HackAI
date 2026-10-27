@@ -121,7 +121,7 @@ export function Modal({ title, onClose, children, wide }: { title: string; onClo
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
     const el = ref.current!;
-    const focusables = () => Array.from(el.querySelectorAll<HTMLElement>('a[href],button:not(:disabled),input:not(:disabled),select,textarea,[tabindex]:not([tabindex="-1"])'));
+    const focusables = () => Array.from(el.querySelectorAll<HTMLElement>('a[href],button:not(:disabled),input:not(:disabled),select,textarea,summary,[tabindex]:not([tabindex="-1"])')).filter((x) => { const d = x.closest('details:not([open])'); return !d || (x.tagName === 'SUMMARY' && x.parentElement === d); });
     (focusables()[0] ?? el).focus();
     const key = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { e.stopPropagation(); onClose(); }

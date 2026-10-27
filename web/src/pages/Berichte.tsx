@@ -15,10 +15,10 @@ export function Berichte() {
   }, [status, staff]);
   return (
     <>
-      <PageHead title="Berichte" lead={staff ? 'Fehler- und Prüfberichte. Nur ein freigegebener Bericht darf bereitgestellt werden – Freigabe und Bereitstellung sind getrennte Schritte.' : 'Berichte, die Ihnen die Prüfstelle bereitgestellt hat.'} />
+      <h1>Berichte</h1>
       {staff && <div className="card"><FilterChips options={meta.statusFilter} value={status} onChange={(v) => setSp(v ? { status: v } : {})} /></div>}
-      <div className="card"><Async s={s}>{(rows: any[]) => rows.length === 0 ? <Empty>{staff ? 'Keine Berichte. Berichte werden in einer Prüfung aus den Vergleichsergebnissen erstellt.' : 'Es wurden noch keine Berichte bereitgestellt.'}</Empty> : (
-        <div className="tablewrap"><table><caption>{rows.length} Berichte</caption><thead><tr><th>Kennung</th><th>Titel</th><th>Art</th><th>Version</th><th>Status</th></tr></thead>
+      <div className="card"><Async s={s}>{(rows: any[]) => rows.length === 0 ? <div className="empty"><strong>{staff ? 'Noch keine Berichte.' : 'Noch nichts bereitgestellt.'}</strong>{staff && <span className="hint">Berichte entstehen in einer Prüfung nach dem Vergleich.</span>}</div> : (
+        <div className="tablewrap"><table><caption className="sr">{rows.length} Berichte</caption><thead><tr><th>Kennung</th><th>Titel</th><th>Art</th><th>Version</th><th>Status</th></tr></thead>
           <tbody>{rows.map((r) => <tr key={r.object_id}><td className="mono">{r.code}</td><td><Link to={`/berichte/${r.object_id}`}>{r.title}</Link></td><td>{r.kind === 'fehlerbericht' ? 'Fehlerbericht' : 'Prüfbericht'}</td><td>v{r.version}</td><td>{staff ? <Badge kind="obj" value={r.status} /> : <Tone tone="ok">Bereitgestellt</Tone>}</td></tr>)}</tbody></table></div>)}</Async></div>
     </>
   );

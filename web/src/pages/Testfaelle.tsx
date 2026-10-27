@@ -11,20 +11,20 @@ export function Testfaelle() {
   const [res, setRes] = useState<any>(null);
   return (
     <>
-      <PageHead title="Testfälle" lead="Testfälle entstehen nur aus freigegebenen Kriterien. Das Soll-Ergebnis wird deterministisch berechnet und muss mit freigegeben werden." />
-      <Tabs label="Bereiche der Testfälle" current={view} onChange={(k) => setSp(k === 'testfaelle' ? {} : { ansicht: k })} items={[['testfaelle', 'Testfälle'], ['auswirkungen', `Auswirkungen von Änderungen${imp.data ? ` (${imp.data.eintraege.filter((x: any) => x.status === 'offen').length} offen)` : ''}`]]} />
+      <h1>Testfälle</h1>
+      <Tabs label="Bereiche der Testfälle" current={view} onChange={(k) => setSp(k === 'testfaelle' ? {} : { ansicht: k })} items={[['testfaelle', 'Testfälle'], ['auswirkungen', `Änderungen${imp.data && imp.data.eintraege.some((x: any) => x.status === 'offen') ? ` (${imp.data.eintraege.filter((x: any) => x.status === 'offen').length})` : ''}`]]} />
       {view === 'testfaelle' && (
         <>
-          <div className="card"><div className="row spread">
+          {(() => { const drafts = (s.data?.eintraege ?? []).filter((t: any) => t.status === 'draft').length; return drafts > 0 && can('content:submit') ? <div className="bulkbar"><span><strong>{drafts}</strong> Entwürfe bereit zur Freigabe</span><button className="accent" disabled={busy} onClick={async () => { const r: any = await run(() => api.post('/api/objects/testcases/submit-batch', {}), (x: any) => `${x.eingereicht} eingereicht${x.uebersprungen.length ? `, ${x.uebersprungen.length} übersprungen (z. B. offene Klärung)` : ''}.`); if (r) s.reload(); }}>Alle einreichen</button></div> : null; })()}
+          <div className="row spread" style={{ margin: '4px 0 12px' }}>
             <FilterChips options={meta.statusFilter} value={status} onChange={(v) => setSp(v ? { status: v } : {})} />
             {can('content:write') && <div className="row">
-              <button className="primary" disabled={busy} onClick={async () => { const r = await run(() => api.post('/api/testcases/generate', {})); if (r) { setRes(r); s.reload(); } }}>Testfälle aus freigegebenen Kriterien erzeugen</button>
+              <button disabled={busy} onClick={async () => { const r = await run(() => api.post('/api/testcases/generate', {}), 'Testfälle aktualisiert.'); if (r) { setRes(r); s.reload(); } }}>Neu berechnen</button>
               {can('ai:run') && <button disabled={busy} onClick={async () => { const r = await run(() => api.post('/api/testcases/ai-propose'), 'KI-Vorschläge als Entwürfe angelegt.'); if (r) s.reload(); }}>KI-Vorschläge</button>}
             </div>}
-          </div></div>
-          {res && <div className="banner info" role="status"><strong>Ergebnis der Erzeugung:</strong> <pre style={{ whiteSpace: 'pre-wrap', margin: 0, font: 'inherit' }}>{typeof res === 'string' ? res : summarize(res)}</pre></div>}
-          <div className="card"><Async s={s}>{(d: any) => d.eintraege.length === 0 ? <Empty>Keine Testfälle{status ? ' mit diesem Status' : ''}. Geben Sie zuerst Kriterien frei und erzeugen Sie dann Testfälle.</Empty> : (
-            <div className="tablewrap"><table><caption>{d.eintraege.length} Testfälle (jeweils aktuelle Version)</caption>
+          </div>
+          <div className="card"><Async s={s}>{(d: any) => d.eintraege.length === 0 ? <div className="empty"><strong>Noch keine Testfälle.</strong><span className="hint">Sie entstehen automatisch, sobald Kriterien freigegeben sind.</span><Link className="btn primary" to="/freigaben">Zu den Freigaben</Link></div> : (
+            <div className="tablewrap"><table><caption className="sr">{d.eintraege.length} Testfälle</caption>
               <thead><tr><th>Kennung</th><th>Titel</th><th>Art</th><th>Version</th><th>Status</th></tr></thead>
               <tbody>{d.eintraege.map((t: any) => <tr key={t.object_id}><td className="mono">{t.code}</td><td><Link to={`/testfaelle/${t.object_id}`}>{t.title}</Link></td><td>{TYPE_LABEL[t.test_type] ?? t.test_type}</td><td>v{t.version}</td><td><Badge kind="obj" value={t.status} /></td></tr>)}</tbody></table></div>
           )}</Async></div>

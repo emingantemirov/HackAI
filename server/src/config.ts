@@ -1,5 +1,20 @@
 // Konfiguration ausschließlich über Umgebungsvariablen. Geheimnisse werden nie geloggt oder an den Browser gegeben.
+import fs from 'node:fs';
 import path from 'node:path';
+
+/** Einfache .env-Unterstützung (KEY=Wert) – sucht im Arbeitsverzeichnis und darüber. Bereits gesetzte Umgebungsvariablen haben Vorrang. */
+export function loadDotEnv(): void {
+  for (const dir of [process.cwd(), path.resolve(process.cwd(), '..')]) {
+    const f = path.join(dir, '.env');
+    if (!fs.existsSync(f)) continue;
+    for (const line of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
+      const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/.exec(line);
+      if (!m || line.trim().startsWith('#')) continue;
+      if (process.env[m[1]] === undefined) process.env[m[1]] = m[2].replace(/^['"]|['"]$/g, '');
+    }
+    return;
+  }
+}
 
 export interface AppConfig {
   databaseUrl: string;
@@ -23,7 +38,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       apiKey: env.HAI_API_KEY && env.HAI_API_KEY.trim() ? env.HAI_API_KEY.trim() : null,
       baseUrl: (env.HAI_BASE_URL ?? 'https://hip-gw.hessian.ai/v1').replace(/\/+$/, ''),
       model: env.HAI_MODEL ?? 'vllm/GLM-Flash:Latest',
-      timeoutMs: Number(env.HAI_TIMEOUT_MS ?? 60000),
+      timeoutMs: Number(env.HAI_TIMEOUT_MS ?? 120000),
       maxRetries: Number(env.HAI_MAX_RETRIES ?? 2),
     },
     // Demo-Modus: regelbasierte Ableitung statt KI. Immer sichtbar gekennzeichnet.

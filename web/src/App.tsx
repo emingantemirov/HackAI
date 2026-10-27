@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { api, ApiError } from './api';
 import { AuthCtx, Meta, Modal, ROLE_LABEL, ToastCtx, User, Loading, Field } from './ui';
+import { Icon, Logo } from './viz';
 import { Dashboard } from './pages/Dashboard';
 import { Kriterien, CriterionDetail } from './pages/Kriterien';
 import { Testfaelle, TestcaseDetail } from './pages/Testfaelle';
@@ -12,20 +13,19 @@ import { Einstellungen } from './pages/Einstellungen';
 
 function Login({ onDone }: { onDone: () => void }) {
   const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
+  const go = async (e: string, p: string) => { setBusy(true); setErr(''); try { await api.post('/api/auth/login', { email: e, password: p }); onDone(); } catch (x: any) { setErr(x instanceof ApiError ? x.message : 'Anmeldung nicht möglich.'); } finally { setBusy(false); } };
   return (
-    <main style={{ maxWidth: 460 }}>
-      <h1>EEL Prüfportal</h1>
-      <p className="lead">Prüfung von Entgeltabrechnungssoftware für den Datenaustausch Entgeltersatzleistungen. <span className="principle">KI unterstützt. Menschen entscheiden.</span></p>
-      <form className="card accent" onSubmit={async (e) => { e.preventDefault(); setBusy(true); setErr(''); try { await api.post('/api/auth/login', { email, password: pw }); onDone(); } catch (x: any) { setErr(x instanceof ApiError ? x.message : 'Anmeldung nicht möglich.'); } finally { setBusy(false); } }}>
-        <h2>Anmelden</h2>
+    <main style={{ maxWidth: 440, paddingTop: 70 }}>
+      <div style={{ textAlign: 'center', marginBottom: 22 }}><Logo size={56} /><h1 style={{ marginTop: 10 }}>EEL Prüfportal</h1><p className="lead" style={{ margin: '0 auto' }}>KI unterstützt. Menschen entscheiden.</p></div>
+      <form className="card" onSubmit={(e) => { e.preventDefault(); go(email, pw); }}>
         {err && <div className="banner bad" role="alert">{err}</div>}
         <Field id="email" label="E-Mail"><input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required /></Field>
         <Field id="pw" label="Passwort"><input type="password" autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} required /></Field>
-        <button className="primary" disabled={busy}>Anmelden</button>
+        <button className="primary" disabled={busy} style={{ width: '100%' }}>Anmelden</button>
       </form>
-      <details className="card"><summary>Demo-Zugänge (nur Entwicklung)</summary>
-        <p className="hint">Alle Konten sind synthetisch. Das Passwort steht in der README.</p>
-        <ul><li><span className="mono">admin@demo.example</span> – Administrator</li><li><span className="mono">fachbearbeitung@demo.example</span> – Fachbearbeitung</li><li><span className="mono">pruefer@demo.example</span>, <span className="mono">pruefer2@demo.example</span> – Prüfer/Freigeber</li><li><span className="mono">kunde@demo.example</span> – Kunde/Hersteller</li></ul>
+      <details style={{ marginTop: 12 }}><summary>Demo-Zugänge</summary>
+        <p className="hint">Synthetische Konten. Das Passwort steht in der README.</p>
+        <div className="row">{[['pruefer@demo.example', 'Prüfer'], ['fachbearbeitung@demo.example', 'Fachbearbeitung'], ['kunde@demo.example', 'Kunde'], ['admin@demo.example', 'Admin']].map(([m, l]) => <button key={m} type="button" onClick={() => { setEmail(m); document.getElementById('pw')?.focus(); }}>{l}</button>)}</div>
       </details>
     </main>
   );
@@ -37,6 +37,7 @@ export function App() {
   const [toasts, setToasts] = useState<{ id: number; msg: string; err?: boolean }[]>([]);
   const [open, setOpen] = useState(false);
   const [help, setHelp] = useState(false);
+  const [pending, setPending] = useState(0);
   const nav = useNavigate(); const loc = useLocation();
 
   const load = useCallback(async () => {
@@ -45,6 +46,8 @@ export function App() {
   useEffect(() => { load(); }, [load]);
   useEffect(() => { const h = () => setUser(null); window.addEventListener('eel-unauthenticated', h); return () => window.removeEventListener('eel-unauthenticated', h); }, []);
   useEffect(() => { setOpen(false); document.getElementById('main')?.focus({ preventScroll: true }); window.scrollTo(0, 0); }, [loc.pathname]);
+
+  useEffect(() => { if (user && user.role !== 'kunde') api.get('/api/dashboard').then((d: any) => setPending(d.wartendAufFreigabe?.gesamt ?? 0)).catch(() => {}); }, [user, loc.pathname]);
 
   // Ungespeicherte Änderungen: Klicks auf interne Links abfangen
   useEffect(() => {
@@ -70,7 +73,7 @@ export function App() {
   const can = (p: string) => user.permissions.includes(p);
   const logout = async () => { await api.post('/api/auth/logout'); setUser(null); nav('/'); };
   const items: [string, string][] = staff
-    ? [['/', 'Übersicht'], ['/kriterien', 'Kriterien'], ['/testfaelle', 'Testfälle'], ['/pruefungen', 'Prüfungen'], ['/freigaben', 'Freigaben'], ['/berichte', 'Berichte']]
+    ? [['/', 'Übersicht'], ['/kriterien', 'Kriterien'], ['/testfaelle', 'Testfälle'], ['/pruefungen', 'Prüfungen'], ['/freigaben', 'Freigaben']]
     : [['/pruefungen', 'Prüfungen'], ['/berichte', 'Berichte']];
 
   return (
@@ -78,19 +81,19 @@ export function App() {
       <ToastCtx.Provider value={toast}>
         <a href="#main" className="skip">Zum Inhalt springen</a>
         <header className="top">
-          <NavLink to={staff ? '/' : '/pruefungen'} className="brand">EEL Prüfportal<small>KI unterstützt. Menschen entscheiden.</small></NavLink>
-          <button className="menu-btn" aria-expanded={open} aria-controls="mainnav" onClick={() => setOpen(!open)}>Menü</button>
+          <NavLink to={staff ? '/' : '/pruefungen'} className="brand"><Logo size={30} />EEL Prüfportal</NavLink>
+          <button className="menu-btn iconbtn" aria-expanded={open} aria-controls="mainnav" aria-label="Menü" onClick={() => setOpen(!open)}><Icon n="menu" /></button>
           <nav id="mainnav" className={`main ${open ? 'open' : ''}`} aria-label="Hauptnavigation">
-            {items.map(([to, t]) => <NavLink key={to} to={to} end={to === '/'}>{t}</NavLink>)}
+            {items.map(([to, t]) => <NavLink key={to} to={to} end={to === '/'}>{t}{to === '/freigaben' && pending > 0 && <span className="pill-n" aria-label={`${pending} offen`}>{pending}</span>}</NavLink>)}
           </nav>
           <div className="userbox">
-            <button onClick={() => setHelp(true)} aria-label="Abkürzungen erklären">Abkürzungen</button>
-            {staff && <NavLink to="/einstellungen">Einstellungen</NavLink>}
+            {meta.demoKiModus && <span className="demo-chip" title="Kriterien werden regelbasiert statt per KI abgeleitet und als Demo-Ableitung gekennzeichnet.">Demo-KI</span>}
+            <button className="iconbtn" onClick={() => setHelp(true)} aria-label="Abkürzungen erklären" title="Abkürzungen"><Icon n="help" /></button>
+            {staff && <NavLink className="iconbtn" to="/einstellungen" aria-label="Einstellungen" title="Einstellungen"><Icon n="gear" /></NavLink>}
             <span className="who" title={user.org}>{user.name}<small>{ROLE_LABEL[user.role] ?? user.role}</small></span>
-            <button onClick={logout}>Abmelden</button>
+            <button className="iconbtn" onClick={logout} aria-label="Abmelden" title="Abmelden"><Icon n="out" /></button>
           </div>
         </header>
-        {meta.demoKiModus && <div className="banner warn" style={{ margin: 0, borderRadius: 0 }} role="note"><strong>Demo-KI-Modus aktiv.</strong> Kriterien werden regelbasiert statt per KI abgeleitet und sind als „Demo-Ableitung“ gekennzeichnet.</div>}
         <main id="main" tabIndex={-1} style={{ outline: 'none' }}>
           <Routes>
             <Route path="/" element={staff ? <Dashboard /> : <Navigate to="/pruefungen" replace />} />

@@ -50,17 +50,16 @@ for (const c of crit) { const r = await fb.api('POST', `/api/objects/criteria/ve
 ok('17 Kriterien eingereicht');
 
 // ---- 2. Ablehnung über die Oberfläche: Begründung ist Pflicht, Version bleibt erhalten ----
-await pr.page.goto('/freigaben'); await pr.page.waitForSelector('text=17 Einreichungen');
+await pr.page.goto('/freigaben'); await pr.page.waitForSelector('article.review');
+assert.equal(await pr.page.locator('article.review').count(), 17);
 await shot(pr.page, 'e2e-freigaben');
-await pr.page.getByRole('link', { name: 'Prüfen und entscheiden' }).first().click();
-await pr.page.waitForSelector('text=Freigabe');
-await pr.page.getByRole('button', { name: 'Ablehnen …' }).click();
+await pr.page.locator('article.review').first().getByRole('button', { name: 'Ablehnen' }).click();
 const rejectBtn = pr.page.getByRole('dialog').getByRole('button', { name: 'Ablehnen', exact: true });
 assert.equal(await rejectBtn.isDisabled(), true, 'Ablehnen ohne Begründung muss gesperrt sein');
-await pr.page.getByRole('dialog').getByLabel(/Begründung der Ablehnung/).fill('Die Regel ist zu allgemein formuliert; bitte auf eine einzige Bedingung kürzen.');
+await pr.page.getByRole('dialog').getByLabel(/Warum wird abgelehnt/).fill('Die Regel ist zu allgemein formuliert; bitte auf eine einzige Bedingung kürzen.');
 await rejectBtn.click();
-await pr.page.waitForSelector('text=Abgelehnt von');
-await pr.page.waitForSelector('text=Die Regel ist zu allgemein');
+await pr.page.waitForSelector('text=Abgelehnt. Die Version bleibt erhalten.');
+await pr.page.waitForFunction(() => document.querySelectorAll('article.review').length === 16);
 ok('Ablehnung nur mit Begründung; abgelehnte Version bleibt sichtbar');
 
 // Überarbeitung (neue Version) und Wiedereinreichung
@@ -97,7 +96,7 @@ assert.equal(camp.status, 200, JSON.stringify(camp.json)); const cid = camp.json
 await fb.api('POST', `/api/campaigns/${cid}/runs`, {});
 const pkg = await fb.api('POST', `/api/campaigns/${cid}/package`, {}); assert.equal(pkg.status, 200, JSON.stringify(pkg.json));
 const sim = await fb.api('POST', `/api/campaigns/${cid}/simulator`, { fault: 'falsche-efz' }); assert.equal(sim.status, 200, JSON.stringify(sim.json));
-await fb.page.goto(`/pruefungen/${cid}`); await fb.page.waitForSelector('text=Nicht bestanden');
+await fb.page.goto(`/pruefungen/${cid}`); await fb.page.locator('table span.badge', { hasText: 'Nicht bestanden' }).first().waitFor();
 await shot(fb.page, 'e2e-pruefung');
 const detail = (await fb.api('GET', `/api/campaigns/${cid}`)).json;
 const failed = detail.laeufe.find((r) => r.status === 'failed'); assert.ok(failed, 'ein Testlauf muss „Nicht bestanden“ sein');
@@ -142,23 +141,23 @@ ok('Mandantentrennung: fremde Prüfung 404, kein Soll, kein Dashboard für Herst
 
 // ---- 8. Abnahmetest 20: Tastatur ----
 const kb = fb.page; await kb.goto('/');
-await kb.waitForSelector('text=Was ist jetzt zu tun');
+await kb.waitForSelector('text=Ihr nächster Schritt');
 await kb.keyboard.press('Tab');
 assert.equal(await kb.evaluate(() => document.activeElement?.textContent), 'Zum Inhalt springen', 'Skip-Link ist erstes Tabziel');
 await kb.keyboard.press('Enter');
 await kb.keyboard.press('Tab');
 const focusVisible = await kb.evaluate(() => { const el = document.activeElement; const cs = el ? getComputedStyle(el) : null; return !!el && el !== document.body && cs.outlineStyle !== 'none'; });
 assert.ok(focusVisible, 'sichtbarer Fokus');
-// Hauptnavigation hat höchstens 6 Punkte
-assert.equal(await kb.locator('nav[aria-label="Hauptnavigation"] a').count(), 6);
+// Hauptnavigation hat 5 Punkte
+assert.equal(await kb.locator('nav[aria-label="Hauptnavigation"] a').count(), 5);
 // Dialog: Fokus gefangen, Esc schließt
-await kb.goto('/kriterien?ansicht=quellen'); await kb.getByRole('button', { name: 'Quelle hinzufügen' }).click();
+await kb.goto('/kriterien?ansicht=quellen'); await kb.getByRole('button', { name: 'Dokument hinzufügen' }).click();
 await kb.waitForSelector('[role=dialog]');
 for (let i = 0; i < 25; i++) await kb.keyboard.press('Tab');
 assert.ok(await kb.evaluate(() => !!document.activeElement?.closest('[role=dialog]')), 'Fokus bleibt im Dialog');
 await kb.keyboard.press('Escape'); await kb.waitForSelector('[role=dialog]', { state: 'detached' });
 // Ablehnen-Dialog nur per Tastatur bedienbar
-ok('Tastatur: Skip-Link, sichtbarer Fokus, ≤ 6 Hauptpunkte, Dialog mit Fokusfalle und Esc');
+ok('Tastatur: Skip-Link, sichtbarer Fokus, 5 Hauptpunkte, Dialog mit Fokusfalle und Esc');
 
 // ---- 9. Abnahmetest 20: kleiner Bildschirm (375 px) ----
 const sm = await session('fachbearbeitung@demo.example', { width: 375, height: 760 });

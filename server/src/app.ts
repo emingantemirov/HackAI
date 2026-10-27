@@ -96,7 +96,14 @@ export async function buildApp({ db, cfg, hai }: Deps): Promise<FastifyInstance>
   }));
 
   // ---- KI-Verbindung (Einstellungen). Der Schlüssel wird nie ausgeliefert. ----
-  app.get('/api/ai/status', async (req) => { staff(req); return { ...(await hai.lastStatus()), konfiguriert: hai.configured, demoModus: cfg.demoAiMode }; });
+  app.get('/api/ai/status', async (req) => { staff(req); return { ...(await hai.lastStatus()), konfiguriert: hai.configured, schluesselQuelle: hai.keySource, demoModus: cfg.demoAiMode }; });
+  app.post('/api/ai/key', async (req) => {
+    const a = A(req); requirePerm(a, 'settings:write');
+    const b = z.object({ key: z.string().trim().max(500) }).parse(req.body);
+    await hai.setKey(b.key || null);
+    await audit(db, { actor: a, orgId: orgOf(a), action: b.key ? 'ki.schluessel_hinterlegt' : 'ki.schluessel_entfernt', objectType: 'settings' });
+    return hai.testConnection();
+  });
   app.post('/api/ai/test', async (req) => { const a = A(req); requirePerm(a, 'settings:write'); return hai.testConnection(); });
 
   // ---- Dashboard ----
@@ -148,10 +155,22 @@ export async function buildApp({ db, cfg, hai }: Deps): Promise<FastifyInstance>
   });
   app.post('/api/sources/:id/derive', async (req) => {
     const a = staff(req); const { id } = req.params as { id: string }; requirePerm(a, 'ai:run');
-    const b = z.object({ mode: z.enum(['uebernahme', 'ki', 'demo']) }).parse(req.body);
+    const b = z.object({ mode: z.enum(['auto', 'uebernahme', 'ki', 'demo']) }).parse(req.body);
+    if (b.mode === 'auto') {
+      // Ein Knopf: KI, wenn verbunden; sonst die gekennzeichnete Demo-Ableitung (falls aktiv); sonst nur eingebettete Kriterien mit Original-ID.
+      const pref = hai.configured ? 'ki' : cfg.demoAiMode ? 'demo' : 'uebernahme';
+      return startJob(db, { orgId: orgOf(a), kind: 'ableitung:auto', key: `${id}:${pref}`, userId: a.id, run: async (ctx) => {
+        const base = { db, cfg, hai, actor: a, orgId: orgOf(a), sourceVersionId: id, progress: ctx.progress };
+        try { return await deriveFromSource({ ...base, mode: pref }); }
+        catch (e) {
+          if (pref === 'ki' && e instanceof AiError && cfg.demoAiMode) { const r = await deriveFromSource({ ...base, mode: 'demo' }); r.hinweis = `Die KI war nicht erreichbar (${e.message}). Stattdessen wurde die gekennzeichnete Demo-Ableitung verwendet. ` + r.hinweis; return r; }
+          throw e;
+        }
+      } });
+    }
     if (b.mode === 'demo' && !cfg.demoAiMode) throw conflict('DEMO_OFF', 'Der Demo-Modus ist nicht aktiviert (DEMO_AI_MODE=true). Er ersetzt die KI durch eine regelbasierte Ableitung und ist immer als Demo gekennzeichnet.');
     if (b.mode === 'ki' && !hai.configured) throw new AiError('nicht_konfiguriert', 'Die KI-Verbindung ist nicht konfiguriert. Nutzen Sie „Eingebettete Kriterien übernehmen“, den Demo-Modus oder legen Sie Kriterien manuell an.');
-    const r = await startJob(db, { orgId: orgOf(a), kind: 'ableitung:' + b.mode, key: id, userId: a.id, run: (ctx) => deriveFromSource({ db, cfg, hai, actor: a, orgId: orgOf(a), sourceVersionId: id, mode: b.mode, progress: ctx.progress }) });
+    const r = await startJob(db, { orgId: orgOf(a), kind: 'ableitung:' + b.mode, key: id, userId: a.id, run: (ctx) => deriveFromSource({ db, cfg, hai, actor: a, orgId: orgOf(a), sourceVersionId: id, mode: b.mode as 'ki' | 'demo' | 'uebernahme', progress: ctx.progress }) });
     return r;
   });
   app.get('/api/jobs/:id', async (req) => { const a = staff(req); const j = await getJob(db, orgOf(a), (req.params as any).id); if (!j) throw notFound('Auftrag'); return j; });
@@ -254,6 +273,51 @@ export async function buildApp({ db, cfg, hai }: Deps): Promise<FastifyInstance>
       });
     });
   });
+  // Stapelaktionen: jede Version wird einzeln (eigene Transaktion, volle Prüfungen, eigener Audit-Eintrag) behandelt.
+  // Nicht Eingereichbares/Freigebbares wird mit Grund übersprungen. Ablehnen gibt es nur einzeln (Begründung nötig).
+  const submitChecks = (type: ObjType, t: any) => async (v: any) => {
+    if (type === 'criterion') {
+      if (!(v.evidence as any[]).some((e) => e.verified)) throw conflict('EVIDENCE_REQUIRED', 'Kein geprüfter Beleg aus einer Quelle.');
+      if (!v.rule?.trim() || !v.expected_behavior?.trim()) throw conflict('INCOMPLETE', 'Regel oder erwartetes Verhalten fehlt.');
+    }
+    if (type === 'testcase') await assertBasisCurrent(t, v.id);
+  };
+  app.post('/api/objects/:type/submit-batch', async (req) => {
+    const a = staff(req); const type = OBJ[(req.params as any).type]; if (!type) throw notFound('Bereich'); requirePerm(a, 'content:submit');
+    const b = z.object({ versionIds: z.array(z.string().uuid()).optional() }).parse(req.body ?? {});
+    const cur = await listCurrent(db, orgOf(a), type);
+    const targets = cur.filter((r: any) => (b.versionIds ? b.versionIds.includes(r.version_id) : r.status === 'draft'));
+    const out = { eingereicht: 0, uebersprungen: [] as { code: string; grund: string }[] };
+    for (const r of targets) {
+      try { await tx(db, (t) => submitForApproval(t, a, type, r.version_id, submitChecks(type, t) as any)); out.eingereicht++; }
+      catch (e: any) { out.uebersprungen.push({ code: r.code, grund: e instanceof HttpError ? e.message : 'Nicht möglich.' }); }
+    }
+    return out;
+  });
+  app.post('/api/objects/:type/approve-batch', async (req) => {
+    const a = staff(req); const type = OBJ[(req.params as any).type]; if (!type) throw notFound('Bereich'); requirePerm(a, 'approval:decide');
+    const b = z.object({ versionIds: z.array(z.string().uuid()).optional() }).parse(req.body ?? {});
+    const cur = await listCurrent(db, orgOf(a), type);
+    const targets = cur.filter((r: any) => r.status === 'submitted' && (!b.versionIds || b.versionIds.includes(r.version_id)));
+    const out: { freigegeben: number; uebersprungen: { code: string; grund: string }[]; testfaelle?: { angelegt: number } } = { freigegeben: 0, uebersprungen: [] };
+    for (const r of targets) {
+      try {
+        await tx(db, async (t) => {
+          if (type === 'testcase') await assertBasisCurrent(t, r.version_id);
+          return decide(t, a, type, { versionId: r.version_id, decision: 'approved' }, async (v) => {
+            if (type === 'criterion') { await onCriterionApproved(t, a, orgOf(a), v); await refreshImpactStatus(t, orgOf(a)); }
+            if (type === 'testcase') await refreshImpactStatus(t, orgOf(a));
+          });
+        });
+        out.freigegeben++;
+      } catch (e: any) { out.uebersprungen.push({ code: r.code, grund: e instanceof HttpError ? e.message : 'Nicht möglich.' }); }
+    }
+    // Nach freigegebenen Kriterien entstehen die Testfall-Entwürfe automatisch (nur aus freigegebenen Grundlagen; Entwürfe, nie freigegeben).
+    if (type === 'criterion' && out.freigegeben > 0 && can(a, 'content:write')) {
+      try { const g = await tx(db, (t) => generateLibrary(t, a, orgOf(a))); out.testfaelle = { angelegt: g.angelegt.length + g.neueVersion.length }; } catch { /* Erzeugung bleibt manuell möglich */ }
+    }
+    return out;
+  });
   app.post('/api/criteria/versions/:vid/ai-revise', async (req) => { const a = staff(req); return reviseRejectedAi(db, hai, a, orgOf(a), (req.params as any).vid); });
   app.get('/api/approvals', async (req) => { const a = staff(req); const q = z.object({ art: z.enum(['criterion', 'testcase', 'report']).optional() }).parse(req.query); return { eintraege: await listApprovalQueue(db, orgOf(a), q.art) }; });
 
@@ -261,8 +325,8 @@ export async function buildApp({ db, cfg, hai }: Deps): Promise<FastifyInstance>
   app.get('/api/clarifications', async (req) => { const a = staff(req); return { eintraege: (await db.query(`select c.*, u.name as decided_by_name from clarifications c left join users u on u.id = c.decided_by where c.org_id = $1 order by c.code`, [orgOf(a)])).rows, katalog: DBVO_CLARIFICATIONS.map((d) => d.key) }; });
   app.post('/api/clarifications/ensure', async (req) => { const a = staff(req); requirePerm(a, 'content:write'); return tx(db, async (t) => { const out = []; for (const d of DBVO_CLARIFICATIONS) out.push(await ensureClarification(t, a, orgOf(a), d)); return { angelegt: out.filter((x) => x.created).length, gesamt: out.length }; }); });
   app.post('/api/clarifications/:id/decide', async (req) => {
-    const a = staff(req); const b = z.object({ decisionKey: z.string(), note: z.string() }).parse(req.body);
-    return tx(db, async (t) => decideClarification(t, a, (req.params as any).id, b.decisionKey, b.note, async () => { await refreshAfterClarification(t, a, orgOf(a)); }));
+    const a = staff(req); const b = z.object({ decisionKey: z.string(), note: z.string().optional() }).parse(req.body);
+    return tx(db, async (t) => decideClarification(t, a, (req.params as any).id, b.decisionKey, b.note?.trim() || `Entschieden durch ${a.label}.`, async () => { await refreshAfterClarification(t, a, orgOf(a)); }));
   });
 
   // ---- Testfälle ----

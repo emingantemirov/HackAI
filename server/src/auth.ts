@@ -96,7 +96,7 @@ export type Permission =
 const MATRIX: Record<Role, Permission[]> = {
   admin: ['settings:write', 'users:manage'],
   fachbearbeitung: ['source:write', 'content:write', 'content:submit', 'ai:run', 'campaign:manage', 'import:upload'],
-  pruefer: ['source:write', 'content:write', 'content:submit', 'ai:run', 'campaign:manage', 'import:upload',
+  pruefer: ['source:write', 'content:write', 'content:submit', 'ai:run', 'campaign:manage', 'import:upload', 'settings:write',
     'approval:decide', 'clarification:decide', 'certification:decide', 'report:release'],
   kunde: ['import:upload'],
 };

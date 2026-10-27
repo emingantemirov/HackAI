@@ -40,13 +40,26 @@ export function redact(text: string): string {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export class HaiClient {
+  /** Schlüssel aus der Umgebung/.env hat Vorrang; sonst der im Portal serverseitig hinterlegte (wird nie an den Browser ausgeliefert). */
+  private storedKey: string | null = null;
   constructor(private cfg: AppConfig, private db: Db, private fetchImpl: typeof fetch = fetch) {}
 
-  get configured(): boolean { return !!this.cfg.hai.apiKey; }
+  private get apiKey(): string | null { return this.cfg.hai.apiKey ?? this.storedKey; }
+  get keySource(): 'umgebung' | 'portal' | null { return this.cfg.hai.apiKey ? 'umgebung' : this.storedKey ? 'portal' : null; }
+  async loadKey(): Promise<void> {
+    const r = await this.db.query(`select value from app_settings where key = 'hai_api_key'`).catch(() => ({ rows: [] as any[] }));
+    this.storedKey = typeof r.rows[0]?.value === 'string' && r.rows[0].value ? r.rows[0].value : null;
+  }
+  async setKey(key: string | null): Promise<void> {
+    if (key) await this.db.query(`insert into app_settings(key, value) values ('hai_api_key', $1) on conflict (key) do update set value = $1, updated_at = now()`, [JSON.stringify(key.trim())]);
+    else await this.db.query(`delete from app_settings where key = 'hai_api_key'`);
+    this.storedKey = key ? key.trim() : null;
+  }
+  get configured(): boolean { return !!this.apiKey; }
   get model(): string { return this.cfg.hai.model; }
 
   private async request(messages: { role: string; content: string }[], maxTokens: number, signal?: AbortSignal): Promise<AiCompletion> {
-    if (!this.cfg.hai.apiKey) throw new AiError('nicht_konfiguriert', 'Die KI-Verbindung ist nicht konfiguriert (HAI_API_KEY fehlt).');
+    if (!this.apiKey) throw new AiError('nicht_konfiguriert', 'Die KI-Verbindung ist nicht konfiguriert. Bitte den API-Schlüssel unter Einstellungen → KI eintragen.');
     const t0 = Date.now();
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), this.cfg.hai.timeoutMs);
@@ -55,7 +68,7 @@ export class HaiClient {
     try {
       res = await this.fetchImpl(`${this.cfg.hai.baseUrl}/chat/completions`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${this.cfg.hai.apiKey}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ model: this.cfg.hai.model, messages, max_tokens: maxTokens, temperature: 0.1 }),
         signal: ctrl.signal,
       });
@@ -72,12 +85,18 @@ export class HaiClient {
       (err as any).retryAfterMs = Number.isFinite(ra) && ra > 0 ? Math.min(ra * 1000, 30000) : undefined;
       throw err;
     }
-    if (res.status >= 500) throw new AiError('dienst_nicht_erreichbar', `Die KI meldet einen Serverfehler (${res.status}).`, true);
-    if (!res.ok) throw new AiError('ungueltige_antwort', `Unerwartete Antwort der KI (HTTP ${res.status}).`);
+    const raw = await res.text().catch(() => '');
+    const excerpt = raw.replace(/\s+/g, ' ').slice(0, 240);
+    if (res.status >= 500) throw new AiError('dienst_nicht_erreichbar', `Die KI meldet einen Serverfehler (${res.status}): ${excerpt}`, true);
+    if (!res.ok) throw new AiError('ungueltige_antwort', `Unerwartete Antwort der KI (HTTP ${res.status}): ${excerpt}`);
     let body: any;
-    try { body = await res.json(); } catch { throw new AiError('ungueltige_antwort', 'Die KI-Antwort ist kein gültiges JSON.'); }
-    const text = body?.choices?.[0]?.message?.content;
-    if (typeof text !== 'string' || !text.trim()) throw new AiError('ungueltige_antwort', 'Die KI-Antwort enthält keinen Text.');
+    try { body = JSON.parse(raw); } catch { throw new AiError('ungueltige_antwort', `Die KI-Antwort ist kein gültiges JSON: ${excerpt}`); }
+    const choice = body?.choices?.[0];
+    // Denkende Modelle (z. B. GLM) verbrauchen Ausgabetokens für interne Überlegungen. Ist die Antwort dann leer und wurde das Limit erreicht, mit mehr Budget erneut anfragen.
+    let text = choice?.message?.content;
+    if (typeof text === 'string') text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/^[\s\S]*<\/think>/i, '').trim();
+    if ((typeof text !== 'string' || !text) && choice?.finish_reason === 'length' && maxTokens < 16000) return this.request(messages, Math.min(maxTokens * 4, 16000), signal);
+    if (typeof text !== 'string' || !text) throw new AiError('ungueltige_antwort', `Die KI-Antwort enthält keinen Text (finish_reason: ${choice?.finish_reason ?? 'unbekannt'}): ${excerpt}`);
     return {
       text, durationMs: Date.now() - t0, model: body.model ?? this.cfg.hai.model,
       usage: { inputTokens: body.usage?.prompt_tokens ?? null, outputTokens: body.usage?.completion_tokens ?? null },

@@ -372,6 +372,26 @@ describe('Hessian AI', () => {
     expect(JSON.stringify(st)).not.toContain('test-key-nicht-echt');
     await app2.close();
   }, 30000);
+  it('denkendes Modell: leere Antwort bei Längenlimit wird mit mehr Budget wiederholt; Schlüssel im Portal hinterlegbar und nie ausgeliefert', async () => {
+    const seen: { max: number; auth: string }[] = [];
+    const fake = (async (_u: string, init: any) => {
+      const b = JSON.parse(init.body); seen.push({ max: b.max_tokens, auth: init.headers.Authorization });
+      const first = seen.length === 1;
+      return new Response(JSON.stringify({ model: 'glm-test', choices: [{ finish_reason: first ? 'length' : 'stop', message: { content: first ? '' : '<think>überlege …</think>Ja, die Verbindung funktioniert.', reasoning_content: 'lange Überlegung' } }], usage: { prompt_tokens: 5, completion_tokens: 9 } }), { status: 200 });
+    }) as any;
+    const hai2 = new HaiClient({ ...c.cfg, hai: { ...c.cfg.hai, apiKey: null } }, c.db, fake);
+    const app2 = await buildApp({ db: c.db, cfg: { ...c.cfg, hai: { ...c.cfg.hai, apiKey: null } }, hai: hai2 }); const as2 = mkAs(app2);
+    expect((await as2(AD).get('/api/ai/status')).json.konfiguriert).toBe(false);
+    expect((await as2(FB).post('/api/ai/key', { key: 'x' })).status).toBe(403);
+    const st = (await as2(AD).post('/api/ai/key', { key: 'portal-schluessel-nicht-echt' })).json;
+    expect(st.state).toBe('verbunden'); expect(st.sample).toBe('Ja, die Verbindung funktioniert.');
+    expect(seen.length).toBe(2); expect(seen[1].max).toBeGreaterThan(seen[0].max); expect(seen[0].auth).toBe('Bearer portal-schluessel-nicht-echt');
+    const status = (await as2(AD).get('/api/ai/status')).json; expect(status.konfiguriert).toBe(true); expect(status.schluesselQuelle).toBe('portal');
+    expect(JSON.stringify(status)).not.toContain('portal-schluessel');
+    expect(JSON.stringify((await as2(AD).get('/api/audit')).json)).not.toContain('portal-schluessel');
+    await as2(AD).post('/api/ai/key', { key: '' }); expect((await as2(AD).get('/api/ai/status')).json.konfiguriert).toBe(false);
+    await app2.close();
+  }, 30000);
   it('ohne Schlüssel: klarer Zustand, manueller Weg bleibt, kein Demo-Ergebnis als KI ausgegeben', async () => {
     const st = (await ad.get('/api/ai/status')).json; expect(st.state).toBe('nicht_konfiguriert');
     const src = (await fb.get('/api/sources')).json.quellen[0];

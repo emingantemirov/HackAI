@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Annot, Async, Badge, ConfirmReason, DemoTag, Empty, Field, FilterChips, Modal, PageHead, Tabs, Tone, api, fmtDate, fmtTime, useAction, useAsync, useAuth, useToast } from '../ui';
 import { SollView, TYPE_LABEL } from './Shared';
+import { Icon, Stacked, Steps } from '../viz';
 
 export function Pruefungen() {
   const [sp, setSp] = useSearchParams(); const { meta, can, staff } = useAuth();
@@ -9,22 +10,24 @@ export function Pruefungen() {
   const view = sp.get('ansicht') ?? (status || grundlage ? 'laeufe' : 'pruefungen');
   const camps = useAsync(() => api.get('/api/campaigns'), []);
   const runs = useAsync(() => api.get(`/api/runs?${new URLSearchParams({ ...(status ? { status } : {}), ...(grundlage ? { grundlage } : {}) })}`), [status, grundlage]);
-  const [neu, setNeu] = useState(false);
+  const [neu, setNeu] = useState(sp.get('neu') === '1');
   return (
     <>
-      <PageHead title="Prüfungen" lead={staff ? 'Eine Prüfung bindet freigegebene Testfälle an eine Softwareversion. Das Prüfpaket geht an die Prüfperson oder den Hersteller; die Rückgabedaten werden hier importiert und mit dem Soll verglichen.' : 'Ihre Prüfungen: Prüfpaket herunterladen, die Software testen und die erzeugten Dateien hochladen.'}
-        actions={can('campaign:manage') && <button className="primary" onClick={() => setNeu(true)}>Neue Prüfung</button>} />
-      <Tabs label="Ansicht" current={view} onChange={(k) => setSp(k === 'pruefungen' ? {} : { ansicht: k })} items={[['pruefungen', 'Prüfungen'], ['laeufe', 'Testläufe']]} />
-      {view === 'pruefungen' && <div className="card"><Async s={camps}>{(d: any) => d.eintraege.length === 0 ? <Empty>Noch keine Prüfung angelegt.</Empty> : (
-        <div className="tablewrap"><table><caption>{d.eintraege.length} Prüfungen</caption><thead><tr><th>Name</th><th>Hersteller</th><th>Software</th><th>Testdatum</th><th>Läufe</th><th>Status</th></tr></thead>
-          <tbody>{d.eintraege.map((c: any) => <tr key={c.id}><td><Link to={`/pruefungen/${c.id}`}>{c.name}</Link></td><td>{c.customer}</td><td>{c.vendor} {c.product} {c.sw_version}</td><td>{fmtDate(c.test_date)}</td><td className="ratio">{c.passed} von {c.runs} bestanden</td><td><Badge kind="camp" value={c.status} /></td></tr>)}</tbody></table></div>)}</Async></div>}
+      <div className="row spread"><h1>Prüfungen</h1>
+        <div className="row">{view === 'pruefungen' ? <button className="ghost" onClick={() => setSp({ ansicht: 'laeufe' })}>Alle Testläufe</button> : <button className="ghost" onClick={() => setSp({})}>Zu den Prüfungen</button>}
+          {can('campaign:manage') && <button className="primary" onClick={() => setNeu(true)}><Icon n="plus" size={16} />Neue Prüfung</button>}</div></div>
+      {view === 'pruefungen' && <div className="card"><Async s={camps}>{(d: any) => d.eintraege.length === 0 ? <div className="empty"><Icon n="flask" size={40} /><strong>Noch keine Prüfung.</strong>{can('campaign:manage') && <button className="primary" onClick={() => setNeu(true)}>Prüfung starten</button>}</div> : d.eintraege.map((c: any) => (
+        <Link key={c.id} className="camp" to={`/pruefungen/${c.id}`}>
+          <div><strong>{c.name}</strong><div className="hint">{c.vendor} {c.product} {c.sw_version} · {c.passed} von {c.runs} bestanden</div></div><Badge kind="camp" value={c.status} />
+          <Stacked parts={[{ v: c.passed, c: '#1b7f46', l: 'bestanden' }, { v: Math.max(0, c.runs - c.passed), c: '#c3cbdb', l: 'offen oder abweichend' }]} />
+        </Link>))}</Async></div>}
       {view === 'laeufe' && (
         <div className="card">
           <FilterChips options={meta.laufFilter} value={status} onChange={(v) => setSp(v ? { ansicht: 'laeufe', status: v } : { ansicht: 'laeufe' })} />
           {grundlage && <p><Tone tone="warn">Gefiltert: Grundlage überholt</Tone> <button className="link" onClick={() => setSp({ ansicht: 'laeufe' })}>Filter aufheben</button></p>}
           <Async s={runs}>{(d: any) => d.eintraege.length === 0 ? <Empty>Keine Testläufe mit diesem Filter.</Empty> : (
-            <div className="tablewrap"><table><caption>{d.eintraege.length} Testläufe</caption><thead><tr><th>Testfall</th><th>Titel</th><th>Prüfung</th><th>Status</th><th>Hinweis</th></tr></thead>
-              <tbody>{d.eintraege.map((r: any) => <tr key={r.id}><td className="mono">{r.testcase_code} v{r.testcase_version}</td><td><Link to={`/laeufe/${r.id}`}>{r.title}</Link></td><td><Link to={`/pruefungen/${r.campaign_id}`}>{r.campaign_name}</Link></td><td><Badge kind="run" value={r.status} /></td><td>{r.basis_outdated && <Tone tone="warn">Grundlage überholt</Tone>}</td></tr>)}</tbody></table></div>)}</Async>
+            <div className="tablewrap"><table><caption className="sr">{d.eintraege.length} Testläufe</caption><thead><tr><th>Testfall</th><th>Titel</th><th>Prüfung</th><th>Status</th><th></th></tr></thead>
+              <tbody>{d.eintraege.map((r: any) => <tr key={r.id}><td className="mono">{r.testcase_code}</td><td><Link to={`/laeufe/${r.id}`}>{r.title}</Link></td><td><Link to={`/pruefungen/${r.campaign_id}`}>{r.campaign_name}</Link></td><td><Badge kind="run" value={r.status} /></td><td>{r.basis_outdated && <Tone tone="warn">Grundlage überholt</Tone>}</td></tr>)}</tbody></table></div>)}</Async>
         </div>
       )}
       {neu && <NewCampaign onClose={() => setNeu(false)} />}
@@ -35,17 +38,28 @@ export function Pruefungen() {
 function NewCampaign({ onClose }: { onClose: () => void }) {
   const nav = useNavigate(); const { busy, run } = useAction();
   const cu = useAsync(() => api.get('/api/customers'), []); const sw = useAsync(() => api.get('/api/software'), []); const rs = useAsync(() => api.get('/api/rulesets'), []);
-  const [f, setF] = useState({ name: '', customerOrgId: '', softwareVersionId: '', rulesetId: '', testDate: '2026-04-15', scopeNote: '' });
+  const [f, setF] = useState({ name: '', customerOrgId: '', softwareVersionId: '', rulesetId: '', testDate: new Date().toISOString().slice(0, 10), scopeNote: '' });
+  // Vorbelegung: erster Eintrag, damit meist nur ein Klick nötig ist.
+  useEffect(() => {
+    setF((x) => ({ ...x, customerOrgId: x.customerOrgId || cu.data?.eintraege?.[0]?.id || '', softwareVersionId: x.softwareVersionId || sw.data?.eintraege?.[0]?.id || '', rulesetId: x.rulesetId || rs.data?.eintraege?.[0]?.id || '' }));
+  }, [cu.data, sw.data, rs.data]);
   const up = (k: string) => (e: any) => setF({ ...f, [k]: e.target.value });
+  const picked = sw.data?.eintraege?.find((x: any) => x.id === f.softwareVersionId);
+  const name = f.name || (picked ? `Prüfung ${picked.vendor} ${picked.product}` : '');
   return (
     <Modal title="Neue Prüfung" onClose={onClose}>
-      <Field id="p-name" label="Name"><input value={f.name} onChange={up('name')} /></Field>
-      <Field id="p-cu" label="Hersteller / Kunde"><select value={f.customerOrgId} onChange={up('customerOrgId')}><option value="">Bitte wählen</option>{cu.data?.eintraege.map((x: any) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></Field>
-      <Field id="p-sw" label="Softwareprofil" hint="bestimmt den Adapter"><select value={f.softwareVersionId} onChange={up('softwareVersionId')}><option value="">Bitte wählen</option>{sw.data?.eintraege.map((x: any) => <option key={x.id} value={x.id}>{x.vendor} {x.product} {x.version} – {x.adapter?.statusLabel}</option>)}</select></Field>
-      <Field id="p-rs" label="Regelwerksstand"><select value={f.rulesetId} onChange={up('rulesetId')}><option value="">Bitte wählen</option>{rs.data?.eintraege.map((x: any) => <option key={x.id} value={x.id}>{x.label} (Dokument {x.document_version}, Datensatz {x.record_version})</option>)}</select></Field>
-      <Field id="p-date" label="Fixes Testdatum" hint="Tagesdatum im Testkontext"><input type="date" value={f.testDate} onChange={up('testDate')} /></Field>
-      <Field id="p-note" label="Anmerkung zum Prüfumfang" hint="optional"><textarea value={f.scopeNote} onChange={up('scopeNote')} /></Field>
-      <button className="primary" disabled={busy || !f.name || !f.customerOrgId || !f.softwareVersionId || !f.rulesetId} onClick={async () => { const r = await run(() => api.post('/api/campaigns', f), 'Prüfung angelegt.'); if (r) { onClose(); nav(`/pruefungen/${r.id ?? r.campaignId}`); } }}>Prüfung anlegen</button>
+      <Field id="p-sw" label="Software"><select value={f.softwareVersionId} onChange={up('softwareVersionId')}>{sw.data?.eintraege.map((x: any) => <option key={x.id} value={x.id}>{x.vendor} {x.product} {x.version}</option>)}</select></Field>
+      <Field id="p-name" label="Name"><input value={name} onChange={up('name')} /></Field>
+      <details><summary>Weitere Angaben</summary>
+        <Field id="p-cu" label="Hersteller / Kunde"><select value={f.customerOrgId} onChange={up('customerOrgId')}>{cu.data?.eintraege.map((x: any) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></Field>
+        <Field id="p-rs" label="Regelwerksstand"><select value={f.rulesetId} onChange={up('rulesetId')}>{rs.data?.eintraege.map((x: any) => <option key={x.id} value={x.id}>{x.label}</option>)}</select></Field>
+        <Field id="p-date" label="Testdatum"><input type="date" value={f.testDate} onChange={up('testDate')} /></Field>
+        <Field id="p-note" label="Anmerkung" hint="optional"><textarea value={f.scopeNote} onChange={up('scopeNote')} /></Field>
+      </details>
+      <div className="row" style={{ marginTop: 14 }}><button className="primary" disabled={busy || !name || !f.customerOrgId || !f.softwareVersionId || !f.rulesetId} onClick={async () => {
+        const r = await run(() => api.post('/api/campaigns', { ...f, name }), 'Prüfung angelegt.');
+        if (r) { const cid = r.id ?? r.campaignId; try { await api.post(`/api/campaigns/${cid}/runs`, {}); } catch { /* Testfälle lassen sich auf der Prüfungsseite hinzufügen */ } onClose(); nav(`/pruefungen/${cid}`); }
+      }}>Prüfung starten</button><button onClick={onClose}>Abbrechen</button></div>
     </Modal>
   );
 }
@@ -53,7 +67,7 @@ function NewCampaign({ onClose }: { onClose: () => void }) {
 export function CampaignDetail() {
   const { id } = useParams(); const { can, staff, meta } = useAuth(); const { busy, run } = useAction(); const toast = useToast();
   const s = useAsync(() => api.get(`/api/campaigns/${id}`), [id]);
-  const [pv, setPv] = useState<any>(null); const [file, setFile] = useState<File | null>(null); const [enc, setEnc] = useState(''); const [target, setTarget] = useState('');
+  const [pv, setPv] = useState<any>(null); const [files, setFiles] = useState<File[]>([]); const [enc, setEnc] = useState(''); const [target, setTarget] = useState('');
   const [fault, setFault] = useState('keine'); const [assign, setAssign] = useState<any>(null);
   return (
     <Async s={s}>{(d: any) => {
@@ -61,9 +75,16 @@ export function CampaignDetail() {
       return (
         <>
           <p><Link to="/pruefungen">← Alle Prüfungen</Link></p>
-          <PageHead title={c.name} lead={<><Badge kind="camp" value={c.status} /> &nbsp;{c.customer} · {c.vendor} {c.product} {c.sw_version} · Testdatum {fmtDate(c.test_date)}</>} />
+          <div className="row spread"><h1>{c.name}</h1><Badge kind="camp" value={c.status} /></div>
+          <p className="hint" style={{ marginTop: -2 }}>{c.vendor} {c.product} {c.sw_version} · Testdatum {fmtDate(c.test_date)}</p>
+          {(() => {
+            const done = [d.laeufe.length > 0, d.pakete.length > 0, d.laeufe.some((r: any) => ['passed', 'failed'].includes(r.status)), d.berichte.length > 0];
+            const now = done.findIndex((x) => !x);
+            return <section className="card"><Steps steps={['Testfälle', 'Prüfpaket', 'Rückgabe', 'Bericht'].map((label, i) => ({ label, state: done[i] ? 'done' : i === now ? 'now' : 'todo' }))} /></section>;
+          })()}
+          <details className="card"><summary>Grundlagen und Zertifizierung</summary>
           <div className="grid two">
-            <section className="card"><h2>Grundlagen</h2>
+            <section><h2>Grundlagen</h2>
               <dl className="facts"><dt>Regelwerk</dt><dd>{c.rs_label} – Dokumentversion {c.document_version}, Datensatzversion {c.record_version}</dd><dt>Gültig</dt><dd>{fmtDate(c.rs_from)} bis {c.rs_to ? fmtDate(c.rs_to) : 'offen'}</dd>
                 {c.transition_note && <><dt>Übergang</dt><dd>{c.transition_note}</dd></>}
                 <dt>Adapter</dt><dd>{ad?.label} <Tone tone={ad?.status === 'implementiert' ? 'ok' : ad?.status === 'simulator' ? 'info' : 'warn'}>{ad?.statusLabel}</Tone></dd></dl>
@@ -72,7 +93,7 @@ export function CampaignDetail() {
               {c.scope_note && <p><strong>Prüfumfang:</strong> {c.scope_note}</p>}
             </section>
             {staff && d.zertifizierung && <Certification d={d.zertifizierung} campaignId={c.id} onChange={s.reload} />}
-          </div>
+          </div></details>
 
           <section className="card"><div className="row spread"><h2>Testläufe</h2>{can('campaign:manage') && <button disabled={busy} onClick={async () => { const r = await run(() => api.post(`/api/campaigns/${c.id}/runs`, {}), (x: any) => `${x.runs?.length ?? 0} Testläufe hinzugefügt${x.skipped?.length ? `, ${x.skipped.length} übersprungen` : ''}.`); if (r) s.reload(); }}>Freigegebene Testfälle hinzufügen</button>}</div>
             {d.laeufe.length === 0 ? <Empty>Noch keine Testläufe. Es werden nur freigegebene Testfallversionen gebunden.</Empty> : (
@@ -81,7 +102,7 @@ export function CampaignDetail() {
           </section>
 
           <section className="card"><h2>Prüfpaket</h2>
-            <p className="hint">Das Paket enthält nur Eingangsdaten und Anweisungen – <strong>keine Soll-Werte</strong>.</p>
+            <p className="hint">Enthält keine Soll-Werte.</p>
             {can('campaign:manage') && <div className="row"><button disabled={busy} onClick={async () => setPv(await run(() => api.get(`/api/campaigns/${c.id}/package/preview`)))}>Vorschau und Prüfung</button>
               <button className="primary" disabled={busy || (pv && !pv.preview?.ok)} onClick={async () => { const r = await run(() => api.post(`/api/campaigns/${c.id}/package`, {}), (x: any) => `Prüfpaket ${x.packageNo} erzeugt (${x.runs} Testläufe).`); if (r) { setPv(null); s.reload(); } }}>Paket erzeugen</button></div>}
             {pv && <div style={{ marginTop: 10 }}>
@@ -102,26 +123,25 @@ export function CampaignDetail() {
           )}
 
           {can('import:upload') && (
-            <section className="card"><h2>Rückgabedaten importieren</h2>
-              <p className="hint">EEL-Ausgabedatei der Software. Der Zeichensatz wird nicht geraten: Ist er nicht eindeutig, wählen Sie ihn hier aus oder die Datei wird mit einer Warnung abgewiesen.</p>
-              <div className="form-grid"><Field id="imp-f" label="Datei"><input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></Field>
-                <Field id="imp-r" label="Testlauf" hint="optional; sonst über das AZVU"><select value={target} onChange={(e) => setTarget(e.target.value)}><option value="">Automatisch über AZVU zuordnen</option>{d.laeufe.map((r: any) => <option key={r.id} value={r.id}>{r.code} – {r.title}</option>)}</select></Field>
-                <Field id="imp-e" label="Zeichenkodierung" hint="optional"><select value={enc} onChange={(e) => setEnc(e.target.value)}><option value="">Nicht festgelegt</option><option value="utf-8">UTF-8</option><option value="iso-8859-1">ISO-8859-1</option></select></Field></div>
-              <button className="primary" disabled={busy || !file} onClick={async () => {
-                const fd = new FormData(); fd.append('file', file!); if (enc) fd.append('encoding', enc); if (target) fd.append('runId', target);
-                const r = await run(() => api.upload(`/api/campaigns/${c.id}/imports`, fd));
-                if (r) { toast(r.message ?? 'Import abgeschlossen.', r.status === 'import_error'); setFile(null); s.reload(); }
-              }}>Importieren</button>
+            <section className="card"><h2>Rückgabedaten hochladen</h2>
+              <label className="drop"><Icon n="upload" size={30} /><span>{files.length ? `${files.length} Datei${files.length === 1 ? '' : 'en'} gewählt` : 'Dateien der Software hier auswählen'}</span>
+                <input type="file" multiple style={{ position: 'absolute', opacity: 0, inset: 0, cursor: 'pointer' }} aria-label="Ausgabedateien der Software" onChange={(e) => setFiles(Array.from(e.target.files ?? []))} /></label>
+              <p className="hint">Die Zuordnung zum Testlauf erfolgt automatisch über das AZVU.</p>
+              <button className="primary" disabled={busy || !files.length} onClick={async () => {
+                let ok = 0, bad = 0;
+                for (const f of files) { const fd = new FormData(); fd.append('file', f); try { const r = await api.upload(`/api/campaigns/${c.id}/imports`, fd); if (r.status === 'import_error') bad++; else ok++; } catch { bad++; } }
+                toast(`${ok} importiert${bad ? `, ${bad} mit Problem (siehe unten)` : ''}.`, bad > 0 && ok === 0); setFiles([]); s.reload();
+              }}>Importieren und vergleichen</button>
             </section>
           )}
 
-          <section className="card"><h2>Importierte Dateien</h2>
+          <details className="card" open={d.importe.some((i: any) => i.status !== "imported")}><summary>Importierte Dateien ({d.importe.length})</summary>
             {d.importe.length === 0 ? <Empty>Noch nichts importiert.</Empty> : (
               <div className="tablewrap"><table><thead><tr><th>Datei</th><th>Zeit</th><th>Status</th><th>Hinweise</th><th></th></tr></thead>
                 <tbody>{d.importe.map((i: any) => <tr key={i.id}><td>{i.file_name}</td><td>{fmtTime(i.uploaded_at)}</td><td><Badge kind="imp" value={i.status} /></td>
                   <td>{i.error && <span>{i.error}</span>}{(i.warnings ?? []).length > 0 && <details><summary className="hint">{i.warnings.length} Hinweise zum Format</summary>{i.warnings.map((w: string, k: number) => <div key={k} className="hint">{w}</div>)}</details>}</td>
                   <td>{staff && i.status === 'assignment_required' && <button onClick={() => setAssign(i)}>Zuordnen …</button>}</td></tr>)}</tbody></table></div>)}
-          </section>
+          </details>
 
           {staff && <ReportsSection campaignId={c.id} berichte={d.berichte} onChange={s.reload} />}
           {!staff && d.berichte.length > 0 && <section className="card"><h2>Bereitgestellte Berichte</h2><ul>{d.berichte.map((b: any) => <li key={b.version_id}><Link to={`/berichte/${b.id}`}>{b.code} – {b.title}</Link> (Version {b.version})</li>)}</ul></section>}

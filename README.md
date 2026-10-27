@@ -23,6 +23,10 @@ npm run demo
 
 Danach im Browser **http://localhost:3001** öffnen. Beim ersten Start werden Demo-Konten und Demo-Daten angelegt. Die Daten liegen im Ordner `storage/` und bleiben beim nächsten Start erhalten (zurücksetzen: Ordner `storage/` löschen).
 
+**KI aktivieren:** Im Portal unter *Einstellungen → KI-Verbindung* den Hessian-AI-Schlüssel eintragen und „Speichern und testen“ wählen. Alternativ eine Datei `.env` (Vorlage: `.env.example`) mit `HAI_API_KEY=…` anlegen. Der Schlüssel liegt nur auf dem Server, wird nie im Browser angezeigt und nicht ins Repository eingecheckt. Ohne Schlüssel läuft die gekennzeichnete Demo-Ableitung.
+
+**Typischer Ablauf (wenige Klicks):** Kriterien → Dokument hinzufügen (Kriterien werden automatisch abgeleitet, dann „Alle zur Freigabe einreichen“) → Freigaben → „Alle freigeben“ (zweite Person; Testfall-Entwürfe entstehen automatisch) → Testfälle einreichen und freigeben → Prüfungen → Neue Prüfung → Rückgabedateien hochladen. Das Dashboard zeigt immer den nächsten Schritt.
+
 Windows/PowerShell: Falls `npm` meldet, die Ausführung von Skripten sei deaktiviert, einmalig `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` ausführen oder `npm.cmd` statt `npm` verwenden.
 
 Eingebettetes PostgreSQL (PGlite) führt alle Zugriffe nacheinander aus und ist für Demo und lokale Entwicklung gedacht. Für den Betrieb mit mehreren Nutzern: echter PostgreSQL-Server.

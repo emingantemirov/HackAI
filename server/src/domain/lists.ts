@@ -91,8 +91,37 @@ export async function dashboard(q: Q, orgId: string) {
   const cl = (await q.query(`select count(*)::int as n from clarifications where org_id = $1 and status = 'open'`, [orgId])).rows[0].n;
   const impacts = (await q.query(`select count(*)::int as n from change_impacts where org_id = $1 and status = 'offen'`, [orgId])).rows[0].n;
   const outdated = (await q.query(`select count(*)::int as n from test_runs r join campaigns c on c.id = r.campaign_id where c.org_id = $1 and r.superseded_by is null and r.basis_outdated`, [orgId])).rows[0].n;
-  const campaigns = (await q.query(`select id, name from campaigns where org_id = $1 order by created_at desc`, [orgId])).rows;
+  const campaigns = (await q.query(
+    `select c.id, c.name, c.status, c.test_date,
+            count(r.id)::int as gesamt,
+            count(*) filter (where r.status = 'passed')::int as bestanden,
+            count(*) filter (where r.status = 'failed')::int as nicht_bestanden,
+            count(*) filter (where r.status in ('awaiting_return','exported','assignment_required','import_error','blocked'))::int as wartet,
+            count(*) filter (where r.status = 'not_run')::int as nicht_gestartet,
+            (select count(*)::int from reports rp where rp.campaign_id = c.id) as berichte
+       from campaigns c left join test_runs r on r.campaign_id = c.id and r.superseded_by is null
+      where c.org_id = $1 group by c.id order by c.created_at desc`, [orgId])).rows;
+  const nextStep = (() => {
+    const n = (m: Record<string, number>, k: string) => m[k] ?? 0;
+    const critTotal = total(crit), tcTotal = total(tc);
+    const open = campaigns.find((c: any) => c.nicht_gestartet + c.wartet > 0);
+    const needReport = campaigns.find((c: any) => c.gesamt > 0 && c.nicht_gestartet + c.wartet === 0 && c.berichte === 0);
+    if (critTotal === 0) return { key: 'quelle', titel: 'Quelle hinzufügen', text: 'Daraus werden die Kriterien abgeleitet.', link: { path: '/kriterien', query: { ansicht: 'quellen' } }, needs: 'source:write' };
+    if (cl > 0) return { key: 'klaerungen', titel: `${cl} ${cl === 1 ? 'Frage' : 'Fragen'} klären`, text: 'Offene Punkte blockieren die Soll-Ergebnisse.', link: { path: '/kriterien', query: { ansicht: 'klaerungen' } }, needs: 'clarification:decide' };
+    if (n(crit, 'draft') > 0) return { key: 'kriterien-einreichen', titel: 'Kriterien einreichen', text: `${n(crit, 'draft')} Entwürfe warten.`, link: { path: '/kriterien', query: { status: 'entwurf' } }, needs: 'content:submit' };
+    if (n(crit, 'rejected') > 0) return { key: 'kriterien-ueberarbeiten', titel: 'Abgelehnte Kriterien überarbeiten', text: `${n(crit, 'rejected')} abgelehnt.`, link: { path: '/kriterien', query: { status: 'abgelehnt' } }, needs: 'content:write' };
+    if (n(crit, 'submitted') > 0) return { key: 'kriterien-freigeben', titel: 'Kriterien freigeben', text: `${n(crit, 'submitted')} warten auf Ihre Entscheidung.`, link: { path: '/freigaben', query: { art: 'criterion' } }, needs: 'approval:decide' };
+    if (tcTotal === 0) return { key: 'testfaelle-erzeugen', titel: 'Testfälle erzeugen', text: 'Aus den freigegebenen Kriterien.', link: { path: '/testfaelle' }, needs: 'content:write' };
+    if (n(tc, 'draft') > 0) return { key: 'testfaelle-einreichen', titel: 'Testfälle einreichen', text: `${n(tc, 'draft')} Entwürfe warten.`, link: { path: '/testfaelle', query: { status: 'entwurf' } }, needs: 'content:submit' };
+    if (n(tc, 'submitted') > 0) return { key: 'testfaelle-freigeben', titel: 'Testfälle freigeben', text: `${n(tc, 'submitted')} warten, inklusive Soll-Ergebnis.`, link: { path: '/freigaben', query: { art: 'testcase' } }, needs: 'approval:decide' };
+    if (campaigns.length === 0) return { key: 'pruefung-starten', titel: 'Prüfung starten', text: 'Software wählen, der Rest ist vorbereitet.', link: { path: '/pruefungen', query: { neu: '1' } }, needs: 'campaign:manage' };
+    if (open) return { key: 'pruefung-fortsetzen', titel: 'Prüfung fortsetzen', text: open.name, link: { path: `/pruefungen/${open.id}` }, needs: 'campaign:manage' };
+    if (needReport) return { key: 'bericht-erstellen', titel: 'Bericht erstellen', text: needReport.name, link: { path: `/pruefungen/${needReport.id}` }, needs: 'content:write' };
+    if (n(rep, 'submitted') > 0) return { key: 'bericht-freigeben', titel: 'Bericht freigeben', text: `${n(rep, 'submitted')} wartet auf Ihre Entscheidung.`, link: { path: '/freigaben', query: { art: 'report' } }, needs: 'approval:decide' };
+    return { key: 'fertig', titel: 'Alles erledigt', text: 'Es wartet nichts auf Sie.', link: { path: '/pruefungen' }, needs: null };
+  })();
   return {
+    naechsterSchritt: nextStep,
     stand: new Date().toISOString(),
     zaehlregeln: [
       'Gezählt wird je Kriterium, Testfall und Bericht nur die aktuelle Version.',

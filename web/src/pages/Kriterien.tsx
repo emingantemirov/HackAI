@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Icon } from '../viz';
 import { Annot, Async, Badge, ConfirmReason, DemoTag, Empty, Field, FilterChips, Modal, PageHead, Quote, Tabs, Tone, api, fmtDate, fmtTime, useAction, useAsync, useAuth, useDirty, useToast } from '../ui';
 
 const ORIGIN: Record<string, string> = { 'quelle-uebernommen': 'Aus Quelle übernommen', 'ki-ableitung': 'KI-Ableitung', 'demo-ableitung': 'Demo-Ableitung (regelbasiert, keine KI)', manuell: 'Manuell angelegt' };
@@ -13,8 +14,8 @@ export function Kriterien() {
   void staff;
   return (
     <>
-      <PageHead title="Kriterien" lead="Prüfbare Anforderungen, abgeleitet aus Quellen. Erst freigegebene Kriterien dürfen Grundlage von Testfällen sein." />
-      <Tabs label="Bereiche der Kriterien" current={view} onChange={set} items={[['kriterien', 'Kriterien'], ['quellen', 'Quellen'], ['klaerungen', 'Klärungsvorgänge']]} />
+      <h1>Kriterien</h1>
+      <Tabs label="Bereiche der Kriterien" current={view} onChange={set} items={[['kriterien', 'Kriterien'], ['quellen', 'Quellen'], ['klaerungen', 'Offene Fragen']]} />
       {view === 'kriterien' && <CriteriaList />}
       {view === 'quellen' && <Sources />}
       {view === 'klaerungen' && <Clarifications />}
@@ -27,9 +28,11 @@ function CriteriaList() {
   const [sp, setSp] = useSearchParams();
   const status = sp.get('status') ?? ''; const [q, setQ] = useState('');
   const s = useAsync(() => api.get(`/api/objects/criteria?${new URLSearchParams({ ...(status ? { status } : {}), ...(q ? { q } : {}) })}`), [status, q]);
-  const [newOpen, setNewOpen] = useState(false);
+  const [newOpen, setNewOpen] = useState(false); const { busy, run } = useAction();
+  const drafts = (s.data?.eintraege ?? []).filter((c: any) => c.status === 'draft').length;
   return (
     <>
+      {drafts > 0 && can('content:submit') && <div className="bulkbar"><span><strong>{drafts}</strong> Entwürfe bereit zur Freigabe</span><button className="accent" disabled={busy} onClick={async () => { const r: any = await run(() => api.post('/api/objects/criteria/submit-batch', {}), (x: any) => `${x.eingereicht} eingereicht${x.uebersprungen.length ? `, ${x.uebersprungen.length} übersprungen (siehe Kriterium)` : ''}.`); if (r) s.reload(); }}>Alle einreichen</button></div>}
       <div className="card">
         <div className="row spread">
           <FilterChips options={meta.statusFilter} value={status} onChange={(v) => setSp(v ? { status: v } : {})} />
@@ -38,10 +41,10 @@ function CriteriaList() {
         </div>
       </div>
       <div className="card">
-        <Async s={s}>{(d: any) => d.eintraege.length === 0 ? <Empty>Keine Kriterien{status ? ' mit diesem Status' : ''}. Fügen Sie unter „Quellen“ ein Dokument hinzu und leiten Sie Kriterien ab.</Empty> : (
-          <div className="tablewrap"><table><caption>{d.eintraege.length} Kriterien (jeweils aktuelle Version)</caption>
-            <thead><tr><th>Kennung</th><th>Titel</th><th>Version</th><th>Status</th></tr></thead>
-            <tbody>{d.eintraege.map((c: any) => <tr key={c.object_id}><td className="mono">{c.code}</td><td><Link to={`/kriterien/${c.object_id}`}>{c.title}</Link></td><td>v{c.version}</td><td><Badge kind="obj" value={c.status} /></td></tr>)}</tbody></table></div>
+        <Async s={s}>{(d: any) => d.eintraege.length === 0 ? <div className="empty"><strong>Noch keine Kriterien.</strong><Link className="btn primary" to="/kriterien?ansicht=quellen">Dokument hinzufügen</Link></div> : (
+          <div className="tablewrap"><table><caption className="sr">{d.eintraege.length} Kriterien</caption>
+            <thead><tr><th>Kennung</th><th>Titel</th><th>Stand</th><th>Status</th></tr></thead>
+            <tbody>{d.eintraege.map((c: any) => <tr key={c.object_id}><td className="mono">{c.code}</td><td><Link to={`/kriterien/${c.object_id}`}>{c.title}</Link></td><td className="hint">v{c.version}</td><td><Badge kind="obj" value={c.status} /></td></tr>)}</tbody></table></div>
         )}</Async>
       </div>
       {newOpen && <NewCriterion onClose={() => setNewOpen(false)} />}
@@ -175,23 +178,23 @@ export function CriterionDetail() {
 function Sources() {
   const { can, meta } = useAuth();
   const s = useAsync(() => api.get('/api/sources'), []);
-  const [add, setAdd] = useState(false); const [open, setOpen] = useState<string | null>(null); const [cmp, setCmp] = useState(false);
+  const [add, setAdd] = useState(false); const [open, setOpen] = useState<string | null>(null); const [auto, setAuto] = useState(false); const [cmp, setCmp] = useState(false);
   return (
     <>
       <div className="row" style={{ marginBottom: 12 }}>
-        {can('source:write') && <button className="primary" onClick={() => setAdd(true)}>Quelle hinzufügen</button>}
-        <button onClick={() => setCmp(true)}>Quellenversionen vergleichen</button>
+        {can('source:write') && <button className="primary" onClick={() => setAdd(true)}><Icon n="plus" size={16} />Dokument hinzufügen</button>}
+        <button className="ghost" onClick={() => setCmp(true)}>Versionen vergleichen</button>
       </div>
       <div className="card">
-        <Async s={s}>{(d: any) => d.quellen.length === 0 ? <Empty>Noch keine Quelle. Laden Sie ein PDF oder DOCX hoch oder fügen Sie Text ein.</Empty> : (
-          <div className="tablewrap"><table><caption>Quellen und ihre Versionen</caption>
+        <Async s={s}>{(d: any) => d.quellen.length === 0 ? <div className="empty"><Icon n="upload" size={40} /><strong>Noch kein Dokument.</strong>{can('source:write') && <button className="primary" onClick={() => setAdd(true)}>Dokument hinzufügen</button>}</div> : (
+          <div className="tablewrap"><table><caption className="sr">Quellen</caption>
             <thead><tr><th>Dokument</th><th>Version</th><th>Art</th><th>Gültig ab</th><th>Text</th><th>Kriterien</th></tr></thead>
             <tbody>{d.quellen.map((r: any) => <tr key={r.id}><td><button className="link" onClick={() => setOpen(r.id)}>{r.title}</button></td><td>{r.version_label}</td><td>{r.input_kind}</td><td>{fmtDate(r.valid_from)}</td>
               <td>{r.extraction_status === 'ok' ? <Tone tone="ok">Text extrahiert</Tone> : r.extraction_status === 'ocr_pruefung_erforderlich' ? <Tone tone="warn">Textprüfung erforderlich</Tone> : <Tone tone="bad">{r.extraction_status}</Tone>}</td><td>{r.criteria_refs}</td></tr>)}</tbody></table></div>
         )}</Async>
       </div>
-      {add && <AddSource onClose={() => setAdd(false)} onDone={(id) => { setAdd(false); s.reload(); if (id) setOpen(id); }} />}
-      {open && <SourceDetail id={open} demo={meta.demoKiModus} onClose={() => { setOpen(null); s.reload(); }} />}
+      {add && <AddSource onClose={() => setAdd(false)} onDone={(id) => { setAdd(false); s.reload(); if (id) { setAuto(true); setOpen(id); } }} />}
+      {open && <SourceDetail id={open} auto={auto} demo={meta.demoKiModus} onClose={() => { setOpen(null); setAuto(false); s.reload(); }} />}
       {cmp && <CompareSources list={s.data?.quellen ?? []} onClose={() => setCmp(false)} />}
     </>
   );
@@ -203,9 +206,10 @@ function AddSource({ onClose, onDone }: { onClose: () => void; onDone: (id?: str
   const [mode, setMode] = useState<'datei' | 'text'>('datei'); const [file, setFile] = useState<File | null>(null); const [text, setText] = useState('');
   const up = (k: string) => (e: any) => setM({ ...m, [k]: e.target.value });
   const submit = async () => {
+    const meta = { ...m, title: m.title || (file?.name.replace(/\.[^.]+$/, '') ?? 'Eingefügter Text'), versionLabel: m.versionLabel || '1.0' };
     const r = await run(async () => {
-      if (mode === 'datei') { const fd = new FormData(); Object.entries(m).forEach(([k, v]) => v && fd.append(k, v)); fd.append('file', file!); return api.upload('/api/sources', fd); }
-      return api.post('/api/sources', { ...m, text });
+      if (mode === 'datei') { const fd = new FormData(); Object.entries(meta).forEach(([k, v]) => v && fd.append(k, v)); fd.append('file', file!); return api.upload('/api/sources', fd); }
+      return api.post('/api/sources', { ...meta, text });
     });
     if (!r) return;
     if (r.duplicate) { toast('Diese Datei ist bereits als Quelle vorhanden (gleicher Hashwert). Es wurde nichts doppelt angelegt.'); onDone(r.sourceVersionId); return; }
@@ -214,42 +218,39 @@ function AddSource({ onClose, onDone }: { onClose: () => void; onDone: (id?: str
   };
   return (
     <Modal title="Quelle hinzufügen" onClose={onClose}>
-      <div className="form-grid">
-        <Field id="s-title" label="Titel des Dokuments"><input value={m.title} onChange={up('title')} /></Field>
-        <Field id="s-ver" label="Version" hint="z. B. 13.1"><input value={m.versionLabel} onChange={up('versionLabel')} /></Field>
-        <Field id="s-pub" label="Herausgeber" hint="optional"><input value={m.publisher} onChange={up('publisher')} /></Field>
-        <Field id="s-area" label="Fachbereich"><input value={m.area} onChange={up('area')} /></Field>
-        <Field id="s-from" label="Gültig ab" hint="optional"><input type="date" value={m.validFrom} onChange={up('validFrom')} /></Field>
-        <Field id="s-to" label="Gültig bis" hint="optional"><input type="date" value={m.validTo} onChange={up('validTo')} /></Field>
-      </div>
-      <Tabs label="Eingabeart" current={mode} onChange={(k) => setMode(k as any)} items={[['datei', 'Datei (PDF, DOCX)'], ['text', 'Text einfügen']]} />
-      {mode === 'datei' ? <Field id="s-file" label="Datei" hint="PDF, DOCX oder EEL-Referenzdatei"><input type="file" accept=".pdf,.docx,.txt,.eel" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></Field>
+      <Tabs label="Eingabeart" current={mode} onChange={(k) => setMode(k as any)} items={[['datei', 'Datei'], ['text', 'Text einfügen']]} />
+      {mode === 'datei' ? <Field id="s-file" label="PDF, DOCX oder Textdatei"><input type="file" accept=".pdf,.docx,.txt,.eel" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></Field>
         : <Field id="s-text" label="Text"><textarea style={{ minHeight: 180 }} value={text} onChange={(e) => setText(e.target.value)} /></Field>}
-      <p className="hint">Das Original bleibt unverändert gespeichert, samt Hashwert. Der importierte Text ist Datenmaterial und wird nie als Anweisung an die KI behandelt.</p>
-      <button className="primary" disabled={busy || !m.title || !m.versionLabel || (mode === 'datei' ? !file : text.length < 20)} onClick={submit}>Quelle speichern</button>
+      <details style={{ margin: '10px 0' }}><summary>Angaben zum Dokument (optional)</summary><div className="form-grid">
+        <Field id="s-title" label="Titel"><input value={m.title} onChange={up('title')} placeholder="sonst Dateiname" /></Field>
+        <Field id="s-ver" label="Version"><input value={m.versionLabel} onChange={up('versionLabel')} placeholder="1.0" /></Field>
+        <Field id="s-pub" label="Herausgeber"><input value={m.publisher} onChange={up('publisher')} /></Field>
+        <Field id="s-from" label="Gültig ab"><input type="date" value={m.validFrom} onChange={up('validFrom')} /></Field>
+      </div></details>
+      <button className="primary" disabled={busy || (mode === 'datei' ? !file : text.length < 20)} onClick={submit}>Hinzufügen und Kriterien ableiten</button>
     </Modal>
   );
 }
 
 function DeriveResult({ r }: { r: any }) {
+  const { can } = useAuth(); const { busy, run } = useAction(); const [done, setDone] = useState(false);
   return (
     <div className="stack">
-      <div className="banner info">{r.hinweis}</div>
-      <ul>
-        <li><strong>{r.neu.length}</strong> neue Kriterien (als Entwurf): {r.neu.map((x: any) => <Link key={x.id} to={`/kriterien/${x.id}`}>{x.code} </Link>)}</li>
-        <li><strong>{r.geaendert.length}</strong> geänderte (neue Entwurfsversion): {r.geaendert.map((x: any) => x.code).join(', ') || '–'}</li>
-        <li><strong>{r.unveraendert.length}</strong> unverändert</li>
-        <li><strong>{r.duplikate.length}</strong> Dubletten übersprungen</li>
-        <li><strong>{r.entfallen.length}</strong> entfallen (nicht mehr in der Quelle; werden nicht gelöscht): {r.entfallen.map((x: any) => x.code).join(', ') || '–'}</li>
-        <li><strong>{r.verworfen.length}</strong> verworfen{r.verworfen.length > 0 && <ul>{r.verworfen.map((x: any, i: number) => <li key={i}>{x.slug}: {x.grund}</li>)}</ul>}</li>
-      </ul>
-      {r.widersprueche?.length > 0 && <div className="banner warn"><strong>Widersprüche in der Quelle</strong><ul>{r.widersprueche.map((w: any, i: number) => <li key={i}>{w.title}: {w.description}</li>)}</ul></div>}
-      {r.fehlendeInformationen?.length > 0 && <div className="banner warn"><strong>Fehlende Informationen</strong><ul>{r.fehlendeInformationen.map((w: string, i: number) => <li key={i}>{w}</li>)}</ul></div>}
+      <p><Tone tone="ok">{r.neu.length} neue Kriterien</Tone> {r.geaendert.length > 0 && <Tone tone="info">{r.geaendert.length} aktualisiert</Tone>} {r.verworfen.length > 0 && <Tone tone="warn">{r.verworfen.length} verworfen</Tone>}</p>
+      {r.hinweis && <p className="hint">{r.hinweis}</p>}
+      {(r.neu.length > 0 || r.geaendert.length > 0) && can('content:submit') && !done && <div className="row">
+        <button className="primary" disabled={busy} onClick={async () => { const x: any = await run(() => api.post('/api/objects/criteria/submit-batch', {}), (z: any) => `${z.eingereicht} Kriterien zur Freigabe eingereicht.`); if (x) setDone(true); }}>Alle zur Freigabe einreichen</button>
+        <Link className="btn" to="/kriterien">Erst ansehen</Link></div>}
+      {done && <Link className="btn accent" to="/freigaben">Weiter zu den Freigaben</Link>}
+      {(r.widersprueche?.length > 0 || r.fehlendeInformationen?.length > 0 || r.verworfen.length > 0) && <details><summary>Details</summary>
+        {r.widersprueche?.length > 0 && <ul>{r.widersprueche.map((w: any, i: number) => <li key={i}><strong>Widerspruch:</strong> {w.title}: {w.description}</li>)}</ul>}
+        {r.fehlendeInformationen?.length > 0 && <ul>{r.fehlendeInformationen.map((w: string, i: number) => <li key={i}>Fehlt: {w}</li>)}</ul>}
+        {r.verworfen.length > 0 && <ul>{r.verworfen.map((x: any, i: number) => <li key={i}>{x.slug}: {x.grund}</li>)}</ul>}</details>}
     </div>
   );
 }
 
-function SourceDetail({ id, onClose, demo }: { id: string; onClose: () => void; demo: boolean }) {
+function SourceDetail({ id, onClose, demo, auto }: { id: string; onClose: () => void; demo: boolean; auto?: boolean }) {
   const s = useAsync(() => api.get(`/api/sources/${id}`), [id]);
   const { can } = useAuth(); const { busy, run } = useAction();
   const [job, setJob] = useState<any>(null); const [ocr, setOcr] = useState('');
@@ -262,6 +263,8 @@ function SourceDetail({ id, onClose, demo }: { id: string; onClose: () => void; 
     const r = await run(() => api.post(`/api/sources/${id}/derive`, { mode }));
     if (r) setJob(await api.get(`/api/jobs/${r.jobId}`));
   };
+  const started = useRef(false);
+  useEffect(() => { if (auto && s.data?.extraction_status === 'ok' && can('ai:run') && !started.current) { started.current = true; derive('auto'); } }, [auto, s.data]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <Modal title="Quelle" onClose={onClose} wide>
       <Async s={s}>{(d: any) => (
@@ -276,14 +279,12 @@ function SourceDetail({ id, onClose, demo }: { id: string; onClose: () => void; 
           <h3>Kriterien aus dieser Quelle</h3>
           {d.kriterien.length ? <ul>{d.kriterien.map((k: any) => <li key={k.id}><Link to={`/kriterien/${k.id}`}>{k.code}</Link> – {k.title} <Badge kind="obj" value={k.status} /></li>)}</ul> : <Empty>Noch keine.</Empty>}
           {can('ai:run') && d.extraction_status === 'ok' && (
-            <div className="card">
-              <h3 style={{ marginTop: 0 }}>Kriterien ableiten</h3>
-              <p className="hint">Ergebnisse sind immer Entwürfe. Belege werden gegen den Originaltext geprüft; nicht belegbare Aussagen werden verworfen.</p>
-              <div className="row">
-                <button disabled={busy} onClick={() => derive('uebernahme')}>Eingebettete Kriterien übernehmen</button>
-                <button disabled={busy} onClick={() => derive('ki')}>Mit KI ableiten</button>
-                {demo && <button disabled={busy} onClick={() => derive('demo')}>Demo-Ableitung (regelbasiert) <DemoTag>Demo</DemoTag></button>}
-              </div>
+            <div>
+              <div className="row"><button className="primary" disabled={busy || (job && ['queued', 'running'].includes(job.status))} onClick={() => derive('auto')}><Icon n="spark" size={16} />Kriterien ableiten</button></div>
+              <details style={{ marginTop: 8 }}><summary>Weitere Möglichkeiten</summary><div className="row">
+                <button disabled={busy} onClick={() => derive('uebernahme')}>Nur eingebettete übernehmen</button>
+                <button disabled={busy} onClick={() => derive('ki')}>Nur mit KI</button>
+                {demo && <button disabled={busy} onClick={() => derive('demo')}>Demo-Ableitung <DemoTag>Demo</DemoTag></button>}</div></details>
               {job && <div style={{ marginTop: 12 }} aria-live="polite">
                 {['queued', 'running'].includes(job.status) && <p><progress value={job.progress} max={Math.max(job.total, 1)} /> {job.message ?? 'läuft …'}</p>}
                 {job.status === 'failed' && <div className="banner bad" role="alert">{job.error}</div>}
@@ -321,7 +322,7 @@ function Clarifications() {
   const [open, setOpen] = useState<any>(null);
   return (
     <>
-      <p className="lead">Hier stehen Stellen, an denen die Quellen offen oder widersprüchlich sind. Das Portal entscheidet sie nie still: Betroffene Soll-Ergebnisse bleiben „Klärung erforderlich“, bis eine berechtigte Person entscheidet. Die Originaltexte bleiben unverändert.</p>
+      <p className="hint">Stellen, an denen die Quellen offen oder widersprüchlich sind. Bis zur Entscheidung bleiben betroffene Soll-Ergebnisse gesperrt.</p>
       <Async s={s}>{(d: any) => (
         <>
           {d.eintraege.length === 0 && <div className="card"><Empty>Es sind noch keine Klärungsvorgänge angelegt.</Empty>{can('content:write') && <button onClick={async () => { if (await run(() => api.post('/api/clarifications/ensure'), (x: any) => `${x.angelegt} Klärungsvorgänge angelegt.`)) s.reload(); }}>Klärungsvorgänge aus den Quellen anlegen</button>}</div>}
@@ -350,9 +351,8 @@ function DecideClarification({ c, onClose, onDone }: { c: any; onClose: () => vo
           <label key={o.key} style={{ display: 'block', fontWeight: 400, padding: '8px 0' }}><input type="radio" name="opt" checked={key === o.key} onChange={() => setKey(o.key)} /> <strong>{o.label}</strong><br /><span className="hint">Folge: {o.consequence}</span></label>
         ))}
       </fieldset>
-      <Field id="cl-note" label="Begründung / Quelle der Entscheidung" hint="Pflicht"><textarea value={note} onChange={(e) => setNote(e.target.value)} /></Field>
-      <p className="hint">Danach werden abhängige Testfall-Entwürfe neu berechnet. Bereits freigegebene Testfälle werden nicht überschrieben; es entstehen neue Entwurfsversionen.</p>
-      <button className="primary" disabled={busy || !key || note.trim().length < 10} onClick={async () => { if (await run(() => api.post(`/api/clarifications/${c.id}/decide`, { decisionKey: key, note }), 'Entscheidung dokumentiert.')) onDone(); }}>Entscheidung speichern</button>
+      <Field id="cl-note" label="Anmerkung" hint="optional"><textarea value={note} onChange={(e) => setNote(e.target.value)} /></Field>
+      <button className="primary" disabled={busy || !key || false} onClick={async () => { if (await run(() => api.post(`/api/clarifications/${c.id}/decide`, { decisionKey: key, note }), 'Entscheidung dokumentiert.')) onDone(); }}>Entscheidung speichern</button>
     </Modal>
   );
 }

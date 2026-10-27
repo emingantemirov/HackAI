@@ -4,13 +4,13 @@ import { Async, Empty, Field, PageHead, Tone, api, fmtDate, fmtTime, useAction, 
 
 export function Einstellungen() {
   const { can } = useAuth();
-  const items: [string, string][] = [['software', 'Softwareprofile'], ['regelwerke', 'Regelwerke'], ['ki', 'KI-Verbindung'], ...(can('users:manage') ? [['benutzer', 'Benutzer'] as [string, string]] : []), ['glossar', 'Glossar'], ['protokoll', 'Protokoll']];
+  const items: [string, string][] = [['ki', 'KI-Verbindung'], ['software', 'Softwareprofile'], ['regelwerke', 'Regelwerke'], ...(can('users:manage') ? [['benutzer', 'Benutzer'] as [string, string]] : []), ['protokoll', 'Protokoll']];
   return (
     <>
-      <PageHead title="Einstellungen" lead="Technische Grundlagen des Portals – getrennt vom täglichen Prüfablauf." />
+      <h1>Einstellungen</h1>
       <div className="tabs" role="navigation" aria-label="Einstellungen">{items.map(([k, l]) => <NavLink key={k} to={`/einstellungen/${k}`} className={({ isActive }) => (isActive ? 'active' : '')} aria-current={undefined}>{l}</NavLink>)}</div>
       <Routes>
-        <Route index element={<Software />} />
+        <Route index element={<Ai />} />
         <Route path="software" element={<Software />} />
         <Route path="regelwerke" element={<Rulesets />} />
         <Route path="ki" element={<Ai />} />
@@ -28,8 +28,7 @@ function Software() {
   return (
     <>
       <div className="card"><h2>Softwareprofile und Adapter</h2>
-        <p className="hint">Der Adapter bestimmt, wie Eingangsdaten bereitgestellt und Ergebnisse zurückgeholt werden. Wo keine Schnittstelle existiert, steht das hier offen – es wird keine Kompatibilität behauptet.</p>
-        <Async s={s}>{(d: any) => <div className="tablewrap"><table><thead><tr><th>Hersteller</th><th>Produkt</th><th>Version</th><th>Adapter</th><th>Status</th></tr></thead>
+                <Async s={s}>{(d: any) => <div className="tablewrap"><table><thead><tr><th>Hersteller</th><th>Produkt</th><th>Version</th><th>Adapter</th><th>Status</th></tr></thead>
           <tbody>{d.eintraege.map((r: any) => <tr key={r.id}><td>{r.vendor}</td><td>{r.product}</td><td>{r.version}</td><td>{r.adapter?.label}</td><td><Tone tone={r.adapter?.status === 'implementiert' ? 'ok' : r.adapter?.status === 'simulator' ? 'info' : 'warn'}>{r.adapter?.statusLabel}</Tone></td></tr>)}</tbody></table></div>}</Async></div>
       <div className="grid two">
         {meta.adapter.map((a: any) => <section key={a.key} className="card"><h3 style={{ marginTop: 0 }}>{a.label} <Tone tone={a.status === 'implementiert' ? 'ok' : a.status === 'simulator' ? 'info' : 'warn'}>{a.statusLabel}</Tone></h3><p>{a.description}</p>
@@ -64,19 +63,31 @@ function Rulesets() {
 }
 
 function Ai() {
-  const s = useAsync(() => api.get('/api/ai/status'), []); const { can } = useAuth(); const { busy, run } = useAction(); const [t, setT] = useState<any>(null);
+  const s = useAsync(() => api.get('/api/ai/status'), []); const { can } = useAuth(); const { busy, run } = useAction();
+  const [t, setT] = useState<any>(null); const [key, setKey] = useState('');
+  const writable = can('settings:write');
+  const show = (r: any) => { setT(r); s.reload(); };
   return (
     <div className="card"><h2>KI-Verbindung (Hessian AI)</h2>
-      <Async s={s}>{(d: any) => (
-        <>
-          <p>{d.konfiguriert ? <Tone tone="ok">Schlüssel hinterlegt</Tone> : <Tone tone="warn">Nicht konfiguriert</Tone>} {d.demoModus && <Tone tone="info">Demo-KI-Modus aktiv</Tone>}</p>
-          {!d.konfiguriert && <div className="banner warn">Es ist kein API-Schlüssel hinterlegt. Alle Funktionen bleiben ohne KI nutzbar: Kriterien können aus Quellen übernommen oder manuell angelegt werden; Testfälle erzeugt die Regel-Engine.</div>}
-          <dl className="facts"><dt>Letzter Zustand</dt><dd>{d.state ?? d.zustand ?? '–'}</dd><dt>Modell</dt><dd className="mono">{d.model ?? '–'}</dd><dt>Zeitpunkt</dt><dd>{fmtTime(d.at)}</dd>{d.message && <><dt>Meldung</dt><dd>{d.message}</dd></>}</dl>
-          <p className="hint">Der Schlüssel wird ausschließlich serverseitig über die Umgebungsvariable <span className="mono">HAI_API_KEY</span> gesetzt. Er wird weder im Browser angezeigt noch gespeichert oder protokolliert. KI-Aktionen werden mit Modell und Promptversion im Protokoll geführt.</p>
-          {can('settings:write') && <button disabled={busy} onClick={async () => { const r = await run(() => api.post('/api/ai/test')); if (r) { setT(r); s.reload(); } }}>Verbindung testen</button>}
-          {t && <div className={`banner ${t.ok ? 'ok' : 'bad'}`} style={{ marginTop: 10 }} role="status">{t.ok ? 'Verbindung erfolgreich.' : 'Verbindung nicht erfolgreich.'} {t.message ?? ''}</div>}
-        </>
-      )}</Async>
+      <Async s={s}>{(d: any) => {
+        const ok = d.konfiguriert && d.state === 'verbunden';
+        return (
+          <>
+            <p>{!d.konfiguriert ? <Tone tone="warn">Kein Schlüssel hinterlegt</Tone> : ok ? <Tone tone="ok">Verbunden</Tone> : <Tone tone="info">Schlüssel hinterlegt – noch nicht getestet</Tone>} {d.demoModus && <Tone tone="info">Demo-KI aktiv</Tone>}
+              {d.konfiguriert && <span className="hint"> Quelle: {d.schluesselQuelle === 'env' ? 'Umgebung / .env' : 'Einstellungen'}{d.model ? ` · Modell ${d.model}` : ''}</span>}</p>
+            {d.message && !ok && <p className="hint">{d.message}</p>}
+            {writable && <>
+              <Field id="ai-key" label="API-Schlüssel" hint="wird nur auf dem Server gespeichert und nie wieder angezeigt"><input type="password" autoComplete="off" spellCheck={false} value={key} onChange={(e) => setKey(e.target.value)} placeholder="sk-…" /></Field>
+              <div className="row">
+                <button className="primary" disabled={busy || key.trim().length < 8} onClick={async () => { const r = await run(() => api.post('/api/ai/key', { key })); if (r) { setKey(''); show(r); } }}>Speichern und testen</button>
+                <button disabled={busy || !d.konfiguriert} onClick={async () => { const r = await run(() => api.post('/api/ai/test')); if (r) show(r); }}>Verbindung testen</button>
+                {d.schluesselQuelle === 'einstellungen' && <button className="ghost" disabled={busy} onClick={async () => { const r = await run(() => api.post('/api/ai/key', { key: '' }), 'Schlüssel entfernt.'); if (r) show(r); }}>Schlüssel entfernen</button>}
+              </div></>}
+            {t && <div className={`banner ${t.state === 'verbunden' ? 'ok' : 'bad'}`} style={{ marginTop: 12 }} role="status"><strong>{t.state === 'verbunden' ? 'Verbindung erfolgreich.' : 'Verbindung nicht erfolgreich.'}</strong> {t.message ?? ''}</div>}
+            <details style={{ marginTop: 12 }}><summary>Alternativ per .env-Datei</summary><p className="hint">Im Projektordner eine Datei <span className="mono">.env</span> mit der Zeile <span className="mono">HAI_API_KEY=…</span> anlegen und den Server neu starten. Die Datei wird nicht in Git aufgenommen.</p></details>
+          </>
+        );
+      }}</Async>
     </div>
   );
 }
