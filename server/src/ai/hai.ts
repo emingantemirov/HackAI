@@ -56,7 +56,10 @@ export class HaiClient {
     this.storedKey = key ? key.trim() : null;
   }
   get configured(): boolean { return !!this.apiKey; }
-  get model(): string { return this.cfg.hai.model; }
+  /** Schlüssel, die mit „sk-ant-“ beginnen, gehören zu Claude (Anthropic); alle anderen zur OpenAI-kompatiblen Hessian-AI-Schnittstelle. */
+  get provider(): 'claude' | 'hessian' { return (this.apiKey ?? '').startsWith('sk-ant-') ? 'claude' : 'hessian'; }
+  get model(): string { return this.provider === 'claude' ? (process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5') : this.cfg.hai.model; }
+  get baseUrl(): string { return this.provider === 'claude' ? (process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com') : this.cfg.hai.baseUrl; }
 
   private async request(messages: { role: string; content: string }[], maxTokens: number, signal?: AbortSignal): Promise<AiCompletion> {
     if (!this.apiKey) throw new AiError('nicht_konfiguriert', 'Die KI-Verbindung ist nicht konfiguriert. Bitte den API-Schlüssel unter Einstellungen → KI eintragen.');
@@ -66,10 +69,14 @@ export class HaiClient {
     signal?.addEventListener('abort', () => ctrl.abort());
     let res: Response;
     try {
-      res = await this.fetchImpl(`${this.cfg.hai.baseUrl}/chat/completions`, {
+      const claude = this.provider === 'claude';
+      const sys = messages.filter((m) => m.role === 'system').map((m) => m.content).join('\n\n');
+      res = await this.fetchImpl(claude ? `${this.baseUrl}/v1/messages` : `${this.baseUrl}/chat/completions`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: this.cfg.hai.model, messages, max_tokens: maxTokens, temperature: 0.1 }),
+        headers: claude ? { 'x-api-key': this.apiKey!, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' } : { Authorization: `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(claude
+          ? { model: this.model, max_tokens: Math.min(maxTokens, 16000), temperature: 0.1, ...(sys ? { system: sys } : {}), messages: messages.filter((m) => m.role !== 'system') }
+          : { model: this.model, messages, max_tokens: maxTokens, temperature: 0.1 }),
         signal: ctrl.signal,
       });
     } catch (e: any) {
@@ -91,15 +98,16 @@ export class HaiClient {
     if (!res.ok) throw new AiError('ungueltige_antwort', `Unerwartete Antwort der KI (HTTP ${res.status}): ${excerpt}`);
     let body: any;
     try { body = JSON.parse(raw); } catch { throw new AiError('ungueltige_antwort', `Die KI-Antwort ist kein gültiges JSON: ${excerpt}`); }
-    const choice = body?.choices?.[0];
+    const claude = this.provider === 'claude';
+    const choice = claude ? { message: { content: (body?.content ?? []).filter((c: any) => c?.type === 'text').map((c: any) => c.text).join('') }, finish_reason: body?.stop_reason === 'max_tokens' ? 'length' : body?.stop_reason } : body?.choices?.[0];
     // Denkende Modelle (z. B. GLM) verbrauchen Ausgabetokens für interne Überlegungen. Ist die Antwort dann leer und wurde das Limit erreicht, mit mehr Budget erneut anfragen.
     let text = choice?.message?.content;
     if (typeof text === 'string') text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/^[\s\S]*<\/think>/i, '').trim();
     if ((typeof text !== 'string' || !text) && choice?.finish_reason === 'length' && maxTokens < 16000) return this.request(messages, Math.min(maxTokens * 4, 16000), signal);
     if (typeof text !== 'string' || !text) throw new AiError('ungueltige_antwort', `Die KI-Antwort enthält keinen Text (finish_reason: ${choice?.finish_reason ?? 'unbekannt'}): ${excerpt}`);
     return {
-      text, durationMs: Date.now() - t0, model: body.model ?? this.cfg.hai.model,
-      usage: { inputTokens: body.usage?.prompt_tokens ?? null, outputTokens: body.usage?.completion_tokens ?? null },
+      text, durationMs: Date.now() - t0, model: body.model ?? this.model,
+      usage: { inputTokens: body.usage?.prompt_tokens ?? body.usage?.input_tokens ?? null, outputTokens: body.usage?.completion_tokens ?? body.usage?.output_tokens ?? null },
     };
   }
 
@@ -149,14 +157,14 @@ export class HaiClient {
   private async log(orgId: string | null, purpose: string, promptVersion: string, status: string, u: AiUsage, ms: number | null, error: string | null) {
     await this.db.query(
       `insert into ai_calls(org_id, purpose, model, prompt_version, status, input_tokens, output_tokens, duration_ms, error) values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-      [orgId, purpose, this.cfg.hai.model, promptVersion, status, u.inputTokens, u.outputTokens, ms, error?.slice(0, 500) ?? null],
+      [orgId, purpose, this.model, promptVersion, status, u.inputTokens, u.outputTokens, ms, error?.slice(0, 500) ?? null],
     ).catch(() => undefined);
   }
 
   /** Verbindungstest (500 Ausgabetokens wie vorgegeben). Ergebnis wird als sichtbarer Zustand gespeichert. */
   async testConnection(): Promise<ConnectionStatus> {
     const checkedAt = new Date().toISOString();
-    const base = { model: this.cfg.hai.model, baseUrl: this.cfg.hai.baseUrl, checkedAt };
+    const base = { model: this.model, baseUrl: this.baseUrl, checkedAt };
     let status: ConnectionStatus;
     if (!this.configured) {
       status = { ...base, state: 'nicht_konfiguriert', message: 'HAI_API_KEY ist nicht gesetzt. Manuelle Bearbeitung bleibt möglich.' };
@@ -180,7 +188,7 @@ export class HaiClient {
       if (!this.configured) return { ...v, state: 'nicht_konfiguriert', message: 'HAI_API_KEY ist nicht gesetzt. Manuelle Bearbeitung bleibt möglich.' };
       return v;
     }
-    return { state: this.configured ? 'wird_geprueft' : 'nicht_konfiguriert', model: this.cfg.hai.model, baseUrl: this.cfg.hai.baseUrl, checkedAt: null,
+    return { state: this.configured ? 'wird_geprueft' : 'nicht_konfiguriert', model: this.model, baseUrl: this.baseUrl, checkedAt: null,
       message: this.configured ? 'Noch nicht geprüft. Bitte Verbindungstest ausführen.' : 'HAI_API_KEY ist nicht gesetzt. Manuelle Bearbeitung bleibt möglich.' };
   }
 }

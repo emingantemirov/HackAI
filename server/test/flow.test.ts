@@ -422,4 +422,17 @@ describe('Hessian AI', () => {
     expect(audit.rowCount).toBeGreaterThan(0);
     await app2.close();
   }, 30000);
+
+  it('Claude-Schlüssel (sk-ant-…) nutzt die Anthropic-Schnittstelle', async () => {
+    let seen: { url: string; headers: any; body: any } | null = null;
+    const fakeFetch = (async (url: string, init: any) => { seen = { url, headers: init.headers, body: JSON.parse(init.body) }; return new Response(JSON.stringify({ model: 'claude-test', content: [{ type: 'text', text: 'Ja, die Verbindung funktioniert.' }], stop_reason: 'end_turn', usage: { input_tokens: 5, output_tokens: 7 } }), { status: 200 }); }) as any;
+    const cfg2 = { ...c.cfg, hai: { ...c.cfg.hai, apiKey: 'sk-ant-test-nicht-echt' } };
+    const h = new HaiClient(cfg2, c.db, fakeFetch);
+    expect(h.provider).toBe('claude');
+    const r = await h.testConnection();
+    expect(r.state).toBe('verbunden');
+    expect(seen!.url).toBe('https://api.anthropic.com/v1/messages');
+    expect(seen!.headers['x-api-key']).toBe('sk-ant-test-nicht-echt'); expect(seen!.headers['anthropic-version']).toBeTruthy();
+    expect(seen!.body.messages[0].role).toBe('user');
+  });
 });

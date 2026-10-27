@@ -68,16 +68,16 @@ function Ai() {
   const writable = can('settings:write');
   const show = (r: any) => { setT(r); s.reload(); };
   return (
-    <div className="card"><h2>KI-Verbindung (Hessian AI)</h2>
+    <div className="card"><h2>KI-Verbindung</h2>
       <Async s={s}>{(d: any) => {
         const ok = d.konfiguriert && d.state === 'verbunden';
         return (
           <>
             <p>{!d.konfiguriert ? <Tone tone="warn">Kein Schlüssel hinterlegt</Tone> : ok ? <Tone tone="ok">Verbunden</Tone> : <Tone tone="info">Schlüssel hinterlegt – noch nicht getestet</Tone>} {d.demoModus && <Tone tone="info">Demo-KI aktiv</Tone>}
-              {d.konfiguriert && <span className="hint"> Quelle: {d.schluesselQuelle === 'env' ? 'Umgebung / .env' : 'Einstellungen'}{d.model ? ` · Modell ${d.model}` : ''}</span>}</p>
+              {d.konfiguriert && <span className="hint"> Quelle: {d.schluesselQuelle === 'env' ? 'Umgebung / .env' : 'Einstellungen'}{d.anbieter ? ` · ${d.anbieter === 'claude' ? 'Claude (Anthropic)' : 'Hessian AI'}` : ''}{d.model ? ` · Modell ${d.model}` : ''}</span>}</p>
             {d.message && !ok && <p className="hint">{d.message}</p>}
             {writable && <>
-              <Field id="ai-key" label="API-Schlüssel" hint="wird nur auf dem Server gespeichert und nie wieder angezeigt"><input type="password" autoComplete="off" spellCheck={false} value={key} onChange={(e) => setKey(e.target.value)} placeholder="sk-…" /></Field>
+              <Field id="ai-key" label="API-Schlüssel" hint="wird nur auf dem Server gespeichert und nie wieder angezeigt"><input type="password" autoComplete="off" spellCheck={false} value={key} onChange={(e) => setKey(e.target.value)} placeholder="sk-ant-… (Claude) oder Hessian-AI-Schlüssel" /></Field>
               <div className="row">
                 <button className="primary" disabled={busy || key.trim().length < 8} onClick={async () => { const r = await run(() => api.post('/api/ai/key', { key })); if (r) { setKey(''); show(r); } }}>Speichern und testen</button>
                 <button disabled={busy || !d.konfiguriert} onClick={async () => { const r = await run(() => api.post('/api/ai/test')); if (r) show(r); }}>Verbindung testen</button>

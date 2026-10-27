@@ -96,7 +96,7 @@ export async function buildApp({ db, cfg, hai }: Deps): Promise<FastifyInstance>
   }));
 
   // ---- KI-Verbindung (Einstellungen). Der Schlüssel wird nie ausgeliefert. ----
-  app.get('/api/ai/status', async (req) => { staff(req); return { ...(await hai.lastStatus()), konfiguriert: hai.configured, schluesselQuelle: hai.keySource, demoModus: cfg.demoAiMode }; });
+  app.get('/api/ai/status', async (req) => { staff(req); return { ...(await hai.lastStatus()), konfiguriert: hai.configured, anbieter: hai.provider, schluesselQuelle: hai.keySource, demoModus: cfg.demoAiMode }; });
   app.post('/api/ai/key', async (req) => {
     const a = A(req); requirePerm(a, 'settings:write');
     const b = z.object({ key: z.string().trim().max(500) }).parse(req.body);
