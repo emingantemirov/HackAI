@@ -14,6 +14,10 @@ describe('Direkte Prüfung einzelner Kriterien', () => {
     const ok = await fb.post(`/api/criteria/versions/${a.version_id}/review`, { decision: 'approved' });
     expect(ok.status, JSON.stringify(ok.json)).toBe(200);
     expect((await pr.get(`/api/objects/criteria/${a.object_id}`)).json.versionen[0].status).toBe('approved');
+    // Früher selbst eingereicht → kann trotzdem selbst entschieden werden
+    const c2 = list[2]; await fb.post(`/api/objects/criteria/versions/${c2.version_id}/submit`);
+    const self = await fb.post(`/api/criteria/versions/${c2.version_id}/review`, { decision: 'approved' });
+    expect(self.status, JSON.stringify(self.json)).toBe(200);
     expect((await pr.post(`/api/criteria/versions/${b.version_id}/review`, { decision: 'rejected', reason: 'kurz' })).status).toBe(400);
     const rj = await pr.post(`/api/criteria/versions/${b.version_id}/review`, { decision: 'rejected', reason: 'Bitte die Regel auf eine einzige Bedingung kürzen.' });
     expect(rj.status, JSON.stringify(rj.json)).toBe(200); expect(rj.json.ueberarbeitet).toBe(false); expect(rj.json.hinweis).toMatch(/KI/);

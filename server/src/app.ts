@@ -328,6 +328,8 @@ export async function buildApp({ db, cfg, hai }: Deps): Promise<FastifyInstance>
       if (!v || v.org_id !== orgOf(a)) throw notFound('Kriterium');
       // Abgeleitete Entwürfe darf jede Person mit Schreibrecht prüfen; manuell verfasste brauchen Freigeberrecht (und Vier-Augen).
       if (!can(a, 'approval:decide') && !(can(a, 'content:write') && v.origin !== 'manuell')) throw new HttpError(403, 'FORBIDDEN', 'Für diese Entscheidung fehlt die Berechtigung.');
+      // Früher selbst eingereichte, abgeleitete Version: zurück in den Entwurf, damit die prüfende Person sie direkt entscheiden kann.
+      if (v.status === 'submitted' && v.submitted_by === a.id && v.origin !== 'manuell') { await withdrawSubmission(t, a, 'criterion', vid); v.status = 'draft'; }
       if (v.status === 'draft') {
         // Von der Ableitung (KI, Demo, Übernahme) erzeugte Entwürfe: die prüfende Person ist die erste menschliche Instanz. Manuell verfasste Entwürfe behalten das Vier-Augen-Prinzip.
         const system = v.origin !== 'manuell';
@@ -351,6 +353,7 @@ export async function buildApp({ db, cfg, hai }: Deps): Promise<FastifyInstance>
     return tx(db, async (t) => {
       const v = await getVersion(t, type, vid); if (!v || v.org_id !== orgOf(a)) throw notFound(type === 'testcase' ? 'Testfall' : 'Bericht');
       if (decision === 'approved' && type === 'testcase') await assertBasisCurrent(t, vid);
+      if (v.status === 'submitted' && v.submitted_by === a.id) { await withdrawSubmission(t, a, type, vid); v.status = 'draft'; }
       if (v.status === 'draft') await submitForApproval(t, a, type, vid, submitChecks(type, t) as any, { systemDraft: true });
       return decide(t, a, type, { versionId: vid, decision, reason, hints }, async () => { if (type === 'testcase') await refreshImpactStatus(t, orgOf(a)); }, { skipPerm: true });
     });
