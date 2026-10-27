@@ -113,7 +113,7 @@ class ModelTests(unittest.TestCase):
     def test_hessian_curl_contract_and_explicit_override(self):
         def transport(request,timeout):
             self.assertEqual(request.full_url,'https://hip-gw.hessian.ai/v1/chat/completions')
-            self.assertEqual(request.get_method(),'POST');self.assertEqual(timeout,45)
+            self.assertEqual(request.get_method(),'POST');self.assertEqual(timeout,120)
             self.assertEqual(request.get_header('Authorization'),'Bearer synthetic-contract-token')
             self.assertEqual(json.loads(request.data)['model'],'vllm/GLM-Flash:Latest')
             return io.BytesIO(b'{"choices":[{"message":{"content":"Synthetic reply"}}]}')
@@ -161,3 +161,35 @@ class HTTPTests(unittest.TestCase):
             with urllib.request.urlopen(req) as r:self.assertEqual(r.status,200)
 
 if __name__=='__main__':unittest.main()
+
+
+class GlmRobustnessTests(unittest.TestCase):
+    def _model(self,responses):
+        calls=[]
+        def transport(request,timeout):
+            calls.append(json.loads(request.data));r=responses.pop(0)
+            if isinstance(r,Exception):raise r
+            return io.BytesIO(json.dumps(r).encode())
+        m=Model(transport=transport);m.backoff=0;m.calls=calls;return m
+    def test_think_block_and_fence_removed(self):
+        with patch.dict(os.environ,{'HAI_API_KEY':'k'},clear=True):
+            m=self._model([{'choices':[{'message':{'content':'<think>überlege…</think>\n```json\n{"a":1}\n```'}}]}])
+            self.assertEqual(json.loads(m.call('Antworte als JSON','x')),{'a':1})
+    def test_json_extracted_from_prose(self):
+        with patch.dict(os.environ,{'HAI_API_KEY':'k'},clear=True):
+            m=self._model([{'choices':[{'message':{'content':'Hier das Ergebnis: {"cases":[1]} Fertig.'}}]}])
+            self.assertEqual(json.loads(m.call('JSON bitte','x')),{'cases':[1]})
+    def test_empty_content_with_length_retries_with_more_tokens(self):
+        with patch.dict(os.environ,{'HAI_API_KEY':'k'},clear=True):
+            m=self._model([{'choices':[{'message':{'content':None},'finish_reason':'length'}]},{'choices':[{'message':{'content':'OK'}}]}])
+            self.assertEqual(m.call('s','u'),'OK');self.assertGreater(m.calls[1]['max_tokens'],m.calls[0]['max_tokens'])
+    def test_retry_on_429_and_timeout(self):
+        err=urllib.error.HTTPError('u',429,'x',{},None)
+        with patch.dict(os.environ,{'HAI_API_KEY':'k'},clear=True):
+            m=self._model([err,TimeoutError(),{'choices':[{'message':{'content':'OK'}}]}])
+            self.assertEqual(m.call('s','u'),'OK')
+    def test_auth_error_not_retried_and_explained(self):
+        err=urllib.error.HTTPError('u',401,'x',{},None)
+        with patch.dict(os.environ,{'HAI_API_KEY':'k'},clear=True):
+            m=self._model([err])
+            with self.assertRaisesRegex(ModelError,'401.*Key'):m.call('s','u')
