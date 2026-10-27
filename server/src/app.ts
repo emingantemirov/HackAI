@@ -173,7 +173,12 @@ export async function buildApp({ db, cfg, hai }: Deps): Promise<FastifyInstance>
       const shown = (await db.query(`select v.id from report_versions v join report_dispatches d on d.report_version_id = v.id and d.kind = 'bereitstellung' join campaigns c on c.id = (select campaign_id from reports where id = v.report_id) where v.report_id = $1 and c.customer_org_id = $2`, [id, a.orgId])).rows;
       if (!shown.length) throw notFound('Bericht');
     }
-    const versions = (await db.query(`select v.*, cb.name as created_by_name, sb.name as submitted_by_name from ${t.ver} v left join users cb on cb.id = v.created_by left join users sb on sb.id = v.submitted_by where v.${t.fk} = $1 order by v.version desc`, [id])).rows;
+    let versions = (await db.query(`select v.*, cb.name as created_by_name, sb.name as submitted_by_name from ${t.ver} v left join users cb on cb.id = v.created_by left join users sb on sb.id = v.submitted_by where v.${t.fk} = $1 order by v.version desc`, [id])).rows;
+    // Hersteller sehen nur Berichtsversionen, die ihnen ausdrücklich bereitgestellt wurden (keine Entwürfe oder nicht bereitgestellte Fassungen).
+    if (a.role === 'kunde') {
+      const shown = new Set((await db.query(`select d.report_version_id from report_dispatches d join report_versions v on v.id = d.report_version_id where v.report_id = $1 and d.kind = 'bereitstellung'`, [id])).rows.map((r) => r.report_version_id));
+      versions = versions.filter((v) => shown.has(v.id));
+    }
     const extra: Record<string, unknown> = {};
     if (type === 'criterion') {
       extra.testfaelle = (await db.query(`select distinct t2.id, t2.code, tv.version, tv.title, tv.status from testcase_criteria tc join testcase_versions tv on tv.id = tc.testcase_version_id join testcases t2 on t2.id = tv.testcase_id where tc.criterion_id = $1 order by t2.code`, [id])).rows;
@@ -185,8 +190,8 @@ export async function buildApp({ db, cfg, hai }: Deps): Promise<FastifyInstance>
       extra.szenario = cur.initial_state?.scenario ? describeScenario(cur.initial_state.scenario) : null;
       extra.klaerungen = cur.blocked_by?.length ? (await db.query('select id, code, title, status from clarifications where id = any($1::uuid[])', [cur.blocked_by])).rows : [];
     }
-    if (type === 'report') extra.bereitstellungen = (await db.query(`select d.* from report_dispatches d join report_versions v on v.id = d.report_version_id where v.report_id = $1 order by d.created_at desc`, [id])).rows;
-    return { objekt: obj, versionen: versions, verlauf: await decisionHistory(db, type, id), ...extra };
+    if (type === 'report' && a.role !== 'kunde') extra.bereitstellungen = (await db.query(`select d.* from report_dispatches d join report_versions v on v.id = d.report_version_id where v.report_id = $1 order by d.created_at desc`, [id])).rows;
+    return { objekt: obj, versionen: versions, verlauf: a.role === 'kunde' ? [] : await decisionHistory(db, type, id), ...extra };
   });
   app.get('/api/objects/:type/:id/audit', async (req) => {
     const a = staff(req); const { id } = req.params as any;
