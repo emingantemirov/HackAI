@@ -237,7 +237,8 @@ export function CriterionDetail() {
 function Sources() {
   const { can, meta } = useAuth();
   const s = useAsync(() => api.get('/api/sources'), []);
-  const [add, setAdd] = useState(false); const [open, setOpen] = useState<string | null>(null); const [auto, setAuto] = useState(false); const [cmp, setCmp] = useState(false);
+  const [add, setAdd] = useState(false); const [open, setOpen] = useState<string | null>(null); const [auto, setAuto] = useState(false);
+  const [del, setDel] = useState<any>(null); const { busy, run } = useAction(); const [cmp, setCmp] = useState(false);
   return (
     <>
       <div className="row" style={{ marginBottom: 12 }}>
@@ -247,19 +248,27 @@ function Sources() {
       <div className="card">
         <Async s={s}>{(d: any) => d.quellen.length === 0 ? <div className="empty"><Icon n="upload" size={40} /><strong>Noch kein Dokument.</strong>{can('source:write') && <button className="primary" onClick={() => setAdd(true)}>Dokument hinzufügen</button>}</div> : (
           <div className="tablewrap"><table><caption className="sr">Quellen</caption>
-            <thead><tr><th>Dokument</th><th>Version</th><th>Art</th><th>Gültig ab</th><th>Text</th><th>Kriterien</th></tr></thead>
+            <thead><tr><th>Dokument</th><th>Version</th><th>Art</th><th>Gültig ab</th><th>Text</th><th>Kriterien</th><th></th></tr></thead>
             <tbody>{d.quellen.map((r: any) => <tr key={r.id}><td><button className="link" onClick={() => setOpen(r.id)}>{r.title}</button></td><td>{r.version_label}</td><td>{r.input_kind}</td><td>{fmtDate(r.valid_from)}</td>
-              <td>{r.extraction_status === 'ok' ? <Tone tone="ok">Text extrahiert</Tone> : r.extraction_status === 'ocr_pruefung_erforderlich' ? <Tone tone="warn">Textprüfung erforderlich</Tone> : <Tone tone="bad">{r.extraction_status}</Tone>}</td><td>{r.criteria_refs}</td></tr>)}</tbody></table></div>
+              <td>{r.extraction_status === 'ok' ? <Tone tone="ok">Text extrahiert</Tone> : r.extraction_status === 'ocr_pruefung_erforderlich' ? <Tone tone="warn">Textprüfung erforderlich</Tone> : <Tone tone="bad">{r.extraction_status}</Tone>}</td><td>{r.criteria_refs}</td><td>{can('source:write') && <button className="ghost" aria-label={`${r.title} entfernen`} title="Entfernen" onClick={() => setDel(r)}><Icon n="trash" size={16} /></button>}</td></tr>)}</tbody></table></div>
         )}</Async>
       </div>
-      {add && <AddSource onClose={() => setAdd(false)} onDone={(id) => { setAdd(false); s.reload(); if (id) { setAuto(true); setOpen(id); } }} />}
+      {add && <AddSource onClose={() => setAdd(false)} onDone={(id, restored) => { setAdd(false); s.reload(); if (id) { setAuto(!restored); setOpen(id); } }} />}
       {open && <SourceDetail id={open} auto={auto} demo={meta.demoKiModus} onClose={() => { setOpen(null); setAuto(false); s.reload(); }} />}
+      {del && <Modal title="Quelle entfernen?" onClose={() => setDel(null)}>
+        <p><strong>{del.title}</strong> (Version {del.version_label}) wird entfernt.</p>
+        <p>Kriterien, die nur auf dieser Quelle beruhen ({del.criteria_refs}), und davon abhängige Testfälle verschwinden aus den Listen. Das Änderungsprotokoll bleibt erhalten. Laden Sie dieselbe Datei erneut hoch, kommt alles zurück.</p>
+        <div className="row"><button className="danger" disabled={busy} onClick={async () => {
+          const r: any = await run(() => api.post(`/api/sources/${del.id}/remove`), (x: any) => `Quelle entfernt${x.kriterien ? `, ${x.kriterien} Kriterien und ${x.testfaelle} Testfälle archiviert` : ''}.`);
+          if (r) { setDel(null); s.reload(); }
+        }}><Icon n="trash" size={16} />Entfernen</button><button onClick={() => setDel(null)}>Abbrechen</button></div>
+      </Modal>}
       {cmp && <CompareSources list={s.data?.quellen ?? []} onClose={() => setCmp(false)} />}
     </>
   );
 }
 
-function AddSource({ onClose, onDone }: { onClose: () => void; onDone: (id?: string) => void }) {
+function AddSource({ onClose, onDone }: { onClose: () => void; onDone: (id?: string, restored?: boolean) => void }) {
   const { busy, run } = useAction(); const toast = useToast();
   const [m, setM] = useState({ title: '', publisher: '', versionLabel: '', validFrom: '', validTo: '', area: 'DBVO', documentId: '' });
   const [mode, setMode] = useState<'datei' | 'text'>('datei'); const [file, setFile] = useState<File | null>(null); const [text, setText] = useState('');
@@ -271,6 +280,7 @@ function AddSource({ onClose, onDone }: { onClose: () => void; onDone: (id?: str
       return api.post('/api/sources', { ...meta, text });
     });
     if (!r) return;
+    if (r.restored) { toast(r.message); onDone(r.sourceVersionId, true); return; }
     if (r.duplicate) { toast('Diese Datei ist bereits als Quelle vorhanden (gleicher Hashwert). Es wurde nichts doppelt angelegt.'); onDone(r.sourceVersionId); return; }
     toast(r.extractionStatus === 'ocr_pruefung_erforderlich' ? 'Quelle gespeichert. Aus dieser Datei konnte kein Text gelesen werden – bitte Text prüfen oder ergänzen.' : 'Quelle gespeichert, Text extrahiert.');
     onDone(r.sourceVersionId);

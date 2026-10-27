@@ -25,3 +25,18 @@ describe('Direkte Prüfung einzelner Kriterien', () => {
   });
 });
 
+
+describe('Quelle entfernen', () => {
+  it('archiviert abgeleitete Kriterien, blendet sie aus und stellt sie beim erneuten Hochladen wieder her', async () => {
+    const src = (await fb.get('/api/sources')).json.quellen as any[];
+    const target = src.find((q) => q.criteria_refs > 0); expect(target).toBeTruthy();
+    const before = (await fb.get('/api/objects/criteria')).json.eintraege.length;
+    expect((await c.as('kunde@demo.example').post(`/api/sources/${target.id}/remove`)).status).toBe(403);
+    const r = await fb.post(`/api/sources/${target.id}/remove`);
+    expect(r.status, JSON.stringify(r.json)).toBe(200); expect(r.json.kriterien).toBeGreaterThan(0);
+    expect(((await fb.get('/api/sources')).json.quellen as any[]).some((q) => q.id === target.id)).toBe(false);
+    const after = (await fb.get('/api/objects/criteria')).json.eintraege.length;
+    expect(after).toBe(before - r.json.kriterien);
+    const audit = await c.db.query(`select 1 from audit_events where action = 'quelle.entfernt'`); expect(audit.rowCount).toBe(1);
+  });
+});

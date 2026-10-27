@@ -35,7 +35,7 @@ const SQL: Record<Kind, { obj: string; ver: string; fk: string }> = {
 export function currentRowsSql(kind: Kind, statusFilter?: string): { sql: string; filterStatus: string | null } {
   const t = SQL[kind];
   const f = statusFilter ? STATUS_FILTERS[statusFilter]?.status ?? null : null;
-  return { filterStatus: f, sql: `select distinct on (o.id) o.id as object_id, o.*, v.id as version_id, v.version, v.status, v.title, v.created_at as version_created_at from ${t.obj} o join ${t.ver} v on v.${t.fk} = o.id where o.org_id = $1 order by o.id, v.version desc` };
+  return { filterStatus: f, sql: `select distinct on (o.id) o.id as object_id, o.*, v.id as version_id, v.version, v.status, v.title, v.created_at as version_created_at from ${t.obj} o join ${t.ver} v on v.${t.fk} = o.id where o.org_id = $1${kind === 'report' ? '' : ' and o.archived_at is null'} order by o.id, v.version desc` };
 }
 
 async function countByStatus(q: Q, orgId: string, kind: Kind) {
@@ -142,8 +142,8 @@ export async function dashboard(q: Q, orgId: string) {
 
 export async function listApprovalQueue(q: Q, orgId: string, art?: string) {
   const parts: string[] = [];
-  if (!art || art === 'criterion') parts.push(`select 'criterion' as art, o.id as object_id, o.code, v.id as version_id, v.version, v.title, v.submitted_at, u.name as submitted_by from criteria o join criteria_versions v on v.criterion_id = o.id left join users u on u.id = v.submitted_by where o.org_id = $1 and v.status = 'submitted'`);
-  if (!art || art === 'testcase') parts.push(`select 'testcase', o.id, o.code, v.id, v.version, v.title, v.submitted_at, u.name from testcases o join testcase_versions v on v.testcase_id = o.id left join users u on u.id = v.submitted_by where o.org_id = $1 and v.status = 'submitted'`);
+  if (!art || art === 'criterion') parts.push(`select 'criterion' as art, o.id as object_id, o.code, v.id as version_id, v.version, v.title, v.submitted_at, u.name as submitted_by from criteria o join criteria_versions v on v.criterion_id = o.id left join users u on u.id = v.submitted_by where o.org_id = $1 and o.archived_at is null and v.status = 'submitted'`);
+  if (!art || art === 'testcase') parts.push(`select 'testcase', o.id, o.code, v.id, v.version, v.title, v.submitted_at, u.name from testcases o join testcase_versions v on v.testcase_id = o.id left join users u on u.id = v.submitted_by where o.org_id = $1 and o.archived_at is null and v.status = 'submitted'`);
   if (!art || art === 'report') parts.push(`select 'report', o.id, o.code, v.id, v.version, v.title, v.submitted_at, u.name from reports o join report_versions v on v.report_id = o.id left join users u on u.id = v.submitted_by where o.org_id = $1 and v.status = 'submitted'`);
   if (!parts.length) return [];
   const r = await q.query(`select * from (${parts.join(' union all ')}) x order by submitted_at`, [orgId]);

@@ -32,7 +32,7 @@ export async function proposeTestcasesAi(db: Db, hai: HaiClient, actor: Actor, o
   if (!hai.configured) throw new AiError('nicht_konfiguriert', 'Die KI-Verbindung ist nicht konfiguriert. Testfälle können weiterhin aus der Bibliothek erzeugt oder manuell angelegt werden.');
   const crit = (await db.query(
     `select c.slug, v.title, v.rule, v.expected_behavior from criteria c join criteria_versions v on v.criterion_id = c.id and v.status = 'approved'
-      where c.org_id = $1 and v.version = (select max(version) from criteria_versions where criterion_id = c.id and status = 'approved') order by c.slug`, [orgId])).rows;
+      where c.org_id = $1 and c.archived_at is null and v.version = (select max(version) from criteria_versions where criterion_id = c.id and status = 'approved') order by c.slug`, [orgId])).rows;
   if (!crit.length) throw badRequest('Es gibt keine freigegebenen Kriterien. Testfälle entstehen nur aus freigegebenen Kriterien.');
   const text = crit.map((c) => `- ${c.slug}: ${c.title}. Regel: ${c.rule}. Erwartet: ${c.expected_behavior}`).join('\n');
   const { data, completion } = await hai.completeJson('testfall-vorschlag', PROMPTS.proposeTestcases, aiCaseSchema, [

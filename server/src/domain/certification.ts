@@ -18,7 +18,7 @@ export async function readiness(q: Q, campaignId: string) {
        from test_runs r join testcases t on t.id = r.testcase_id join testcase_versions tv on tv.id = r.testcase_version_id where r.campaign_id = $1 and r.superseded_by is null`, [campaignId])).rows;
   const checks: ReadinessCheck[] = [];
   const all = (await q.query(
-    `select distinct on (t.id) t.id, t.code, v.status, v.version from testcases t join testcase_versions v on v.testcase_id = t.id where t.org_id = $1 order by t.id, v.version desc`, [c.org_id])).rows;
+    `select distinct on (t.id) t.id, t.code, v.status, v.version from testcases t join testcase_versions v on v.testcase_id = t.id where t.org_id = $1 and t.archived_at is null order by t.id, v.version desc`, [c.org_id])).rows;
   const inCampaign = new Set(runs.map((r) => r.testcase_id));
   const notReady = all.filter((t) => t.status !== 'approved').map((t) => `${t.code} (${t.status})`);
   const notIn = all.filter((t) => t.status === 'approved' && !inCampaign.has(t.id)).map((t) => t.code);

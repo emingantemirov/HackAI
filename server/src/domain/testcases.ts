@@ -231,7 +231,7 @@ async function approvedCriteria(q: Q, orgId: string, slugs: string[]) {
   const found: { slug: string; criterionId: string; versionId: string; version: number }[] = [];
   const missing: string[] = [];
   for (const slug of slugs) {
-    const c = await q.query('select id from criteria where org_id = $1 and slug = $2', [orgId, slug]);
+    const c = await q.query('select id from criteria where org_id = $1 and slug = $2 and archived_at is null', [orgId, slug]);
     if (!c.rowCount) { missing.push(`${slug} (nicht vorhanden)`); continue; }
     const v = await effectiveApproved(q, 'criterion', c.rows[0].id);
     if (!v) { missing.push(`${slug} (keine freigegebene Version)`); continue; }
@@ -352,7 +352,7 @@ export async function refreshAfterClarification(q: Q, actor: Actor, orgId: strin
   const out: string[] = [];
   const open = await q.query(
     `select distinct on (t.id) t.id, t.code, v.id as vid, v.status, v.profile_requirements->>'generatorKey' as k
-       from testcases t join testcase_versions v on v.testcase_id = t.id where t.org_id = $1 order by t.id, v.version desc`, [orgId]);
+       from testcases t join testcase_versions v on v.testcase_id = t.id where t.org_id = $1 and t.archived_at is null order by t.id, v.version desc`, [orgId]);
   for (const row of open.rows) {
     if (row.status !== 'clarification' && row.status !== 'draft') continue;
     const def = defs.find((d) => d.key === row.k);

@@ -77,7 +77,7 @@ export async function addRuns(q: Q, actor: Actor, campaignId: string, testcaseId
   const camp = await q.query('select * from campaigns where id = $1 and org_id = $2', [campaignId, actor.orgId]);
   if (!camp.rowCount) throw notFound('Prüfung');
   const c = camp.rows[0];
-  const tcs = await q.query(`select t.id, t.code from testcases t where t.org_id = $1 ${testcaseIds?.length ? 'and t.id = any($2::uuid[])' : ''} order by t.code`, testcaseIds?.length ? [actor.orgId, testcaseIds] : [actor.orgId]);
+  const tcs = await q.query(`select t.id, t.code from testcases t where t.org_id = $1 and t.archived_at is null ${testcaseIds?.length ? 'and t.id = any($2::uuid[])' : ''} order by t.code`, testcaseIds?.length ? [actor.orgId, testcaseIds] : [actor.orgId]);
   const runs: { runId: string; code: string; azvu: string }[] = [];
   const skipped: { code: string; grund: string }[] = [];
   const campNo = (await q.query('select count(*)::int as n from campaigns where org_id = $1 and created_at <= $2', [actor.orgId, c.created_at])).rows[0].n;

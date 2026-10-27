@@ -14,7 +14,7 @@ import {
 import { audit } from './audit.js';
 import { readStored, findQuote, storeFile } from './extract.js';
 import { GLOSSARY } from './glossary.js';
-import { importSourceFile, importSourceText, compareSources, supplyReviewedText } from './domain/sources.js';
+import { importSourceFile, importSourceText, compareSources, supplyReviewedText, removeSource } from './domain/sources.js';
 import { createCriterion } from './domain/criteria.js';
 import { deriveFromSource } from './domain/derive.js';
 import { startJob, getJob } from './domain/jobs.js';
@@ -115,8 +115,12 @@ export async function buildApp({ db, cfg, hai }: Deps): Promise<FastifyInstance>
     const r = await db.query(
       `select d.id as document_id, d.title, d.publisher, d.area, sv.id, sv.version_label, sv.valid_from, sv.valid_to, sv.input_kind, sv.file_name, sv.sha256, sv.size_bytes, sv.extraction_status, sv.extraction_note, sv.created_at,
               (select count(*)::int from criteria_versions cv where cv.evidence @> jsonb_build_array(jsonb_build_object('source_version_id', sv.id))) as criteria_refs
-         from source_documents d join source_versions sv on sv.document_id = d.id where d.org_id = $1 order by d.title, sv.created_at`, [orgOf(a)]);
+         from source_documents d join source_versions sv on sv.document_id = d.id where d.org_id = $1 and sv.removed_at is null order by d.title, sv.created_at`, [orgOf(a)]);
     return { quellen: r.rows };
+  });
+  app.post('/api/sources/:id/remove', async (req) => {
+    const a = staff(req); const { id } = req.params as { id: string };
+    return { ok: true, ...(await tx(db, (t) => removeSource(t, a, id))) };
   });
   app.post('/api/sources', async (req) => {
     const a = staff(req);

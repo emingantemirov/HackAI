@@ -35,9 +35,18 @@ function validateMeta(m: SourceMeta) {
 async function insertSource(q: Q, actor: Actor, cfg: AppConfig, meta: SourceMeta, kind: 'pdf' | 'docx' | 'text' | 'datei', fileName: string | null, mime: string | null, buf: Buffer, ex: Extraction): Promise<ImportResult> {
   const orgId = actor.orgId!;
   const sha = sha256(buf);
-  const dup = await q.query('select sv.id, sv.document_id, sv.version_label, d.title, sv.extraction_status, sv.extraction_note from source_versions sv join source_documents d on d.id = sv.document_id where sv.org_id = $1 and sv.sha256 = $2', [orgId, sha]);
+  const dup = await q.query('select sv.id, sv.document_id, sv.version_label, d.title, sv.extraction_status, sv.extraction_note, sv.removed_at from source_versions sv join source_documents d on d.id = sv.document_id where sv.org_id = $1 and sv.sha256 = $2', [orgId, sha]);
   if (dup.rowCount) {
     const d = dup.rows[0];
+    if (d.removed_at) {
+      // Entfernte Quelle erneut hochgeladen: wiederherstellen, samt der dadurch archivierten Kriterien und Testfälle.
+      await q.query('update source_versions set removed_at = null, removed_by = null where id = $1', [d.id]);
+      const c = await q.query('update criteria set archived_at = null, archived_by_source = null where archived_by_source = $1', [d.id]);
+      const t = await q.query('update testcases set archived_at = null, archived_by_source = null where archived_by_source = $1', [d.id]);
+      await audit(q, { actor, orgId, action: 'quelle.wiederhergestellt', objectType: 'source', objectId: d.id, details: { kriterien: c.rowCount, testfaelle: t.rowCount } });
+      return { duplicate: false, restored: true, sourceVersionId: d.id, documentId: d.document_id, extractionStatus: d.extraction_status, extractionNote: d.extraction_note,
+        message: `Die zuvor entfernte Quelle „${d.title}“ wurde wiederhergestellt (${c.rowCount} Kriterien).` } as any;
+    }
     await audit(q, { actor, orgId, action: 'quelle.duplikat_erkannt', objectType: 'source', objectId: d.id, details: { sha256: sha, dateiname: fileName } });
     return {
       duplicate: true, sourceVersionId: d.id, documentId: d.document_id, extractionStatus: d.extraction_status, extractionNote: d.extraction_note,
@@ -123,4 +132,44 @@ export async function compareSources(q: Q, orgId: string, fromId: string, toId: 
     counts: { neu: added.length, geaendert: changed.length, unveraendert: unchanged.length, entfallen: removed.length },
     neu: added, geaendert: changed, entfallen: removed,
   };
+}
+
+/** Entfernt eine Quelle durch Archivieren. Kriterien, die nur auf entfernten Quellen beruhen, und davon abhängige Testfälle werden mit archiviert. Nichts wird gelöscht (Protokoll, Versionen bleiben). */
+export async function removeSource(q: Q, actor: Actor, sourceVersionId: string): Promise<{ kriterien: number; testfaelle: number }> {
+  requirePerm(actor, 'source:write');
+  const sv = (await q.query('select sv.id, sv.removed_at, d.title from source_versions sv join source_documents d on d.id = sv.document_id where sv.id = $1 and sv.org_id = $2', [sourceVersionId, actor.orgId])).rows[0];
+  if (!sv) throw notFound('Quelle');
+  if (sv.removed_at) return { kriterien: 0, testfaelle: 0 };
+  // Kriterien, die diese Quelle belegen und keine andere aktive Quelle haben
+  const linked = (await q.query(
+    `select c.id, c.code, (select v.evidence from criteria_versions v where v.criterion_id = c.id order by v.version desc limit 1) as evidence
+       from criteria c where c.org_id = $1 and c.archived_at is null
+        and exists (select 1 from criteria_versions v where v.criterion_id = c.id and v.evidence @> $2::jsonb)`, [actor.orgId, JSON.stringify([{ source_version_id: sourceVersionId }])])).rows;
+  const toArchive: { id: string; code: string }[] = [];
+  for (const c of linked) {
+    const ids = [...new Set(((c.evidence ?? []) as any[]).map((e) => e.source_version_id).filter((x) => x && x !== sourceVersionId))];
+    let otherActive = false;
+    if (ids.length) otherActive = ((await q.query('select 1 from source_versions where id = any($1::uuid[]) and removed_at is null', [ids])).rowCount ?? 0) > 0;
+    if (!otherActive) toArchive.push({ id: c.id, code: c.code });
+  }
+  const ids = toArchive.map((c) => c.id);
+  if (ids.length) {
+    const used = await q.query(
+      `select distinct c.code from testcase_criteria tc join criteria c on c.id = tc.criterion_id join test_runs r on r.testcase_id = (select testcase_id from testcase_versions where id = tc.testcase_version_id)
+        where tc.criterion_id = any($1::uuid[])`, [ids]);
+    if (used.rowCount) throw conflict('SOURCE_IN_USE', `Die Quelle kann nicht entfernt werden: ${used.rows.map((r) => r.code).join(', ')} wird bereits in einer Prüfung verwendet.`);
+  }
+  let testfaelle = 0;
+  if (ids.length) {
+    await q.query('update criteria set archived_at = now(), archived_by_source = $2 where id = any($1::uuid[])', [ids, sourceVersionId]);
+    // Testfälle archivieren, deren sämtliche Kriterien archiviert sind
+    const t = await q.query(
+      `update testcases t set archived_at = now(), archived_by_source = $1
+        where t.archived_at is null and exists (select 1 from testcase_criteria tc join testcase_versions tv on tv.id = tc.testcase_version_id where tv.testcase_id = t.id)
+          and not exists (select 1 from testcase_criteria tc join testcase_versions tv on tv.id = tc.testcase_version_id join criteria c on c.id = tc.criterion_id where tv.testcase_id = t.id and c.archived_at is null)`, [sourceVersionId]);
+    testfaelle = t.rowCount ?? 0;
+  }
+  await q.query('update source_versions set removed_at = now(), removed_by = $2 where id = $1', [sourceVersionId, actor.id]);
+  await audit(q, { actor, orgId: actor.orgId!, action: 'quelle.entfernt', objectType: 'source', objectId: sourceVersionId, details: { titel: sv.title, kriterien: ids.length, testfaelle } });
+  return { kriterien: ids.length, testfaelle };
 }

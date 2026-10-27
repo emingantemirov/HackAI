@@ -53,5 +53,5 @@ export async function createCriterion(q: Q, actor: Actor, orgId: string, d: Crit
 export const CURRENT_CRITERIA_SQL = `
   select distinct on (v.criterion_id) v.*, c.code, c.slug, c.area, c.org_id
     from criteria_versions v join criteria c on c.id = v.criterion_id
-   where c.org_id = $1
+   where c.org_id = $1 and c.archived_at is null
    order by v.criterion_id, v.version desc`;
