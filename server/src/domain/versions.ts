@@ -106,8 +106,8 @@ export async function withdrawSubmission(q: Q, actor: Actor, type: ObjType, vers
 
 export interface DecisionInput { versionId: string; decision: 'approved' | 'rejected'; reason?: string; hints?: string }
 
-export async function decide(q: Q, actor: Actor, type: ObjType, input: DecisionInput, onApproved?: (v: any) => Promise<void>): Promise<any> {
-  requirePerm(actor, 'approval:decide');
+export async function decide(q: Q, actor: Actor, type: ObjType, input: DecisionInput, onApproved?: (v: any) => Promise<void>, opts?: { skipPerm?: boolean }): Promise<any> {
+  if (!opts?.skipPerm) requirePerm(actor, 'approval:decide');
   const t = TABLES[type];
   const v = await getVersion(q, type, input.versionId);
   if (v.org_id !== actor.orgId) throw notFound(t.label);

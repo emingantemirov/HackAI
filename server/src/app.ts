@@ -321,17 +321,19 @@ export async function buildApp({ db, cfg, hai }: Deps): Promise<FastifyInstance>
   // Direkte Prüfung eines Kriteriums-Entwurfs: Die KI bzw. die Ableitung hat den Entwurf erzeugt, der Mensch entscheidet.
   // Freigeben macht das Kriterium sofort für Testfälle aktiv. Ablehnen braucht eine Begründung; danach überarbeitet die KI den Entwurf als neue Version.
   app.post('/api/criteria/versions/:vid/review', async (req) => {
-    const a = staff(req); requirePerm(a, 'approval:decide'); const { vid } = req.params as any;
-    const b = z.object({ decision: z.enum(['approved', 'rejected']), reason: z.string().optional() }).parse(req.body);
+    const a = staff(req); const { vid } = req.params as any;
+    const b = z.object({ decision: z.enum(['approved', 'rejected']), reason: z.string().optional(), hints: z.string().optional() }).parse(req.body);
     const decided = await tx(db, async (t) => {
       const v = (await t.query(`select v.*, c.org_id from criteria_versions v join criteria c on c.id = v.criterion_id where v.id = $1`, [vid])).rows[0];
       if (!v || v.org_id !== orgOf(a)) throw notFound('Kriterium');
+      // Abgeleitete Entwürfe darf jede Person mit Schreibrecht prüfen; manuell verfasste brauchen Freigeberrecht (und Vier-Augen).
+      if (!can(a, 'approval:decide') && !(can(a, 'content:write') && v.origin !== 'manuell')) throw new HttpError(403, 'FORBIDDEN', 'Für diese Entscheidung fehlt die Berechtigung.');
       if (v.status === 'draft') {
         // Von der Ableitung (KI, Demo, Übernahme) erzeugte Entwürfe: die prüfende Person ist die erste menschliche Instanz. Manuell verfasste Entwürfe behalten das Vier-Augen-Prinzip.
         const system = v.origin !== 'manuell';
         await submitForApproval(t, a, 'criterion', vid, submitChecks('criterion', t) as any, { systemDraft: system });
       }
-      return decide(t, a, 'criterion', { versionId: vid, decision: b.decision, reason: b.reason }, async (x) => { await onCriterionApproved(t, a, orgOf(a), x); await refreshImpactStatus(t, orgOf(a)); });
+      return decide(t, a, 'criterion', { versionId: vid, decision: b.decision, reason: b.reason, hints: b.hints }, async (x) => { await onCriterionApproved(t, a, orgOf(a), x); await refreshImpactStatus(t, orgOf(a)); }, { skipPerm: true });
     });
     if (b.decision === 'approved') {
       let testfaelle = 0;

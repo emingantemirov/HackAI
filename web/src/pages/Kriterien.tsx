@@ -29,35 +29,42 @@ function FilterSelect({ value, onChange }: { value: string; onChange: (v: string
   );
 }
 
+export function StatusPill({ status }: { status: string }) {
+  if (status === 'approved') return <span className="spill ok"><Icon n="check" size={16} />Freigegeben</span>;
+  if (status === 'rejected') return <span className="spill bad"><Icon n="x" size={16} />Abgelehnt</span>;
+  return <span className="spill wait"><Icon n="clock" size={16} />Wartet auf Freigabe</span>;
+}
+
 function ReviewCard({ c, onDone }: { c: any; onDone: () => void }) {
   const { can } = useAuth(); const { busy, run } = useAction(); const toast = useToast();
   const [rej, setRej] = useState(false); const [leaving, setLeaving] = useState(false);
   const ev = (c.evidence as any[] | undefined)?.find((e) => e.verified);
-  const decide = can('approval:decide');
+  const decide = can('approval:decide') || (can('content:write') && c.origin !== 'manuell');
   const approve = async () => {
     const r: any = await run(() => api.post(`/api/criteria/versions/${c.version_id}/review`, { decision: 'approved' }));
     if (r) { setLeaving(true); toast(`${c.code} freigegeben – ab jetzt Grundlage für Testfälle${r.testfaelle ? ` (${r.testfaelle} Testfall-Entwürfe angelegt)` : ''}.`); setTimeout(onDone, 300); }
   };
   return (
-    <article className={`review ${leaving ? 'gone' : ''}`} aria-label={`${c.code} ${c.title}`}>
+    <article className={`review ${c.status === 'rejected' ? 's-bad' : 's-wait'} ${leaving ? 'gone' : ''}`} aria-label={`${c.code} ${c.title}`}>
       <Icon n="list" size={22} />
       <div>
         <h3><Link to={`/kriterien/${c.object_id}`} style={{ color: 'inherit', textDecoration: 'none' }}>{c.title}</Link></h3>
         <div className="hint"><span className="mono">{c.code}</span> · v{c.version} · {c.origin === 'ki-ableitung' ? 'KI-Entwurf' : c.origin === 'demo-ableitung' ? 'Demo-Entwurf' : c.origin === 'manuell' ? 'manuell' : 'aus Quelle'}{c.status === 'rejected' && ' · abgelehnt'}</div>
       </div>
-      <div className="actions">
+      <div className="actions" style={{ alignItems: 'center' }}>
+        <StatusPill status={c.status} />
         {c.status === 'rejected' ? <ReviseButton c={c} onDone={onDone} /> : decide ? <>
           <button className="primary" disabled={busy} onClick={approve}><Icon n="check" size={16} />Freigeben</button>
-          <button className="danger" disabled={busy} onClick={() => setRej(true)}><Icon n="x" size={16} />Ablehnen</button></> : <span className="hint">Wartet auf Prüfer/Freigeber</span>}
+          <button className="danger" disabled={busy} onClick={() => setRej(true)}><Icon n="x" size={16} />Ablehnen</button></> : null}
       </div>
       <div className="body">
         {c.rule && <p style={{ margin: '2px 0' }}>{c.rule}</p>}
         {ev && <p className="hint" style={{ margin: '4px 0 0' }}>„{String(ev.quote).slice(0, 180)}{String(ev.quote).length > 180 ? '…' : ''}“</p>}
       </div>
-      {rej && <ConfirmReason title="Kriterium ablehnen" label="Was soll geändert werden?" confirmLabel="Ablehnen und von KI überarbeiten lassen" danger minLength={10} onCancel={() => setRej(false)}
-        intro={<p className="hint">Ihre Begründung geht als Anweisung an die KI. Sie erzeugt daraus eine neue Version zur erneuten Prüfung; die abgelehnte bleibt erhalten.</p>}
-        onConfirm={async (reason) => {
-          const r: any = await run(() => api.post(`/api/criteria/versions/${c.version_id}/review`, { decision: 'rejected', reason }));
+      {rej && <ConfirmReason title="Kriterium ablehnen" label="Grund der Ablehnung" confirmLabel="Ablehnen und mit KI verbessern" danger hintField hintLabel="Was soll die KI verbessern? (Anweisung)" minLength={10} onCancel={() => setRej(false)}
+        intro={<p className="hint">Die KI erstellt aus Grund und Anweisung eine neue Version zur erneuten Prüfung. Die abgelehnte bleibt erhalten.</p>}
+        onConfirm={async (reason, hints) => {
+          const r: any = await run(() => api.post(`/api/criteria/versions/${c.version_id}/review`, { decision: 'rejected', reason, hints }));
           if (r) { setRej(false); toast(r.ueberarbeitet ? 'Abgelehnt. Die KI hat eine überarbeitete Version erstellt – bitte prüfen.' : r.hinweis, !r.ueberarbeitet); onDone(); }
         }} />}
     </article>
@@ -95,8 +102,8 @@ function CriteriaList() {
               : f === 'pruefen' && <div className="card"><div className="empty"><Icon n="check" size={36} /><strong>Nichts mehr zu prüfen.</strong></div></div>)}
             {showRej && rejected.length > 0 && <section aria-label="Abgelehnt"><h2>Abgelehnt <span className="pill-n" style={{ background: 'var(--muted)' }}>{rejected.length}</span></h2>{rejected.map((c) => <ReviewCard key={c.version_id} c={c} onDone={s.reload} />)}</section>}
             {showApp && approved.length > 0 && (
-              <details className="card" open={f === 'freigegeben'}><summary><strong>Freigegeben</strong> <span className="badge ok">{approved.length}</span></summary>
-                <div className="tablewrap"><table><caption className="sr">Freigegebene Kriterien</caption><tbody>{approved.map((c) => <tr key={c.object_id}><td className="mono">{c.code}</td><td><Link to={`/kriterien/${c.object_id}`}>{c.title}</Link></td><td className="hint">v{c.version}</td></tr>)}</tbody></table></div>
+              <details className="card" open={f === 'freigegeben'}><summary><span className="spill ok"><Icon n="check" size={16} />Freigegeben · {approved.length}</span></summary>
+                <div className="tablewrap"><table><caption className="sr">Freigegebene Kriterien</caption><tbody>{approved.map((c) => <tr key={c.object_id}><td className="mono">{c.code}</td><td><Link to={`/kriterien/${c.object_id}`}>{c.title}</Link></td><td className="hint">v{c.version}</td><td><StatusPill status="approved" /></td></tr>)}</tbody></table></div>
               </details>)}
             {f === 'abgelehnt' && rejected.length === 0 && <div className="card"><div className="empty"><strong>Nichts abgelehnt.</strong></div></div>}
           </>
@@ -157,8 +164,8 @@ export function CriterionDetail() {
         if (r) { setEdit({}); setSel(null); reloadAll(); }
       };
       const decide = async (decision: 'approved' | 'rejected', reason?: string, hints?: string) => {
-        const r = await run(() => api.post(`/api/objects/criteria/versions/${v.id}/decide`, { decision, reason, hints }), decision === 'approved' ? 'Kriterium freigegeben.' : 'Kriterium abgelehnt. Die Version bleibt erhalten; eine Überarbeitung legt eine neue Version an.');
-        if (r) { setDialog(null); reloadAll(); }
+        const r: any = await run(() => api.post(`/api/criteria/versions/${v.id}/review`, { decision, reason, hints }));
+        if (r) { setDialog(null); toast(decision === 'approved' ? 'Kriterium freigegeben – ab jetzt Grundlage für Testfälle.' : r.ueberarbeitet ? 'Abgelehnt. Die KI hat eine überarbeitete Version erstellt – bitte prüfen.' : r.hinweis, decision === 'rejected' && !r.ueberarbeitet); reloadAll(); }
       };
       const lastReject = [...(d.verlauf as any[])].reverse().find((h) => h.decision === 'rejected' && h.version === v.version);
       return (
@@ -201,16 +208,13 @@ export function CriterionDetail() {
             </section>
           </div>
           <section className="card accent" aria-label="Freigabe">
-            <h2>Freigabe</h2>
-            <p className="hint">Drei Freigaben sind Pflicht: Kriterien, Testfälle mit Soll-Ergebnis und Berichte. Die KI kann nie freigeben. Die einreichende Person darf nicht selbst freigeben (Vier-Augen-Prinzip).</p>
-            <div className="row">
-              {isCur && ['draft', 'rejected', 'clarification'].includes(v.status) && can('content:submit') && <button className="primary" disabled={busy || dirty} onClick={async () => { if (await run(() => api.post(`/api/objects/criteria/versions/${v.id}/submit`), 'Zur Freigabe eingereicht.')) reloadAll(); }}>Zur Freigabe einreichen</button>}
-              {isCur && v.status === 'submitted' && <button disabled={busy} onClick={async () => { if (await run(() => api.post(`/api/objects/criteria/versions/${v.id}/withdraw`), 'Einreichung zurückgezogen.')) reloadAll(); }}>Einreichung zurückziehen</button>}
-              {isCur && v.status === 'submitted' && can('approval:decide') && <><button className="primary" disabled={busy || v.submitted_by === user.id} onClick={() => setDialog('approve')}>Freigeben</button><button className="danger" disabled={busy} onClick={() => setDialog('reject')}>Ablehnen …</button></>}
-              {isCur && v.status === 'rejected' && can('ai:run') && <button disabled={busy} onClick={async () => { if (await run(() => api.post(`/api/criteria/versions/${v.id}/ai-revise`), 'KI-Vorschlag als neue Entwurfsversion angelegt. Bitte prüfen.')) reloadAll(); }}>KI-Überarbeitung vorschlagen</button>}
+            <div className="row spread"><h2 style={{ margin: 0 }}>Entscheidung</h2><StatusPill status={v.status} /></div>
+            <div className="row" style={{ marginTop: 12 }}>
+              {isCur && ['draft', 'submitted'].includes(v.status) && (can('approval:decide') || (can('content:write') && v.origin !== 'manuell')) && <><button className="primary" disabled={busy || dirty} onClick={() => setDialog('approve')}><Icon n="check" size={16} />Freigeben</button><button className="danger" disabled={busy || dirty} onClick={() => setDialog('reject')}><Icon n="x" size={16} />Ablehnen</button></>}
+              {isCur && v.status === 'rejected' && can('ai:run') && <button className="primary" disabled={busy} onClick={async () => { if (await run(() => api.post(`/api/criteria/versions/${v.id}/ai-revise`), 'KI-Vorschlag als neue Version angelegt. Bitte prüfen.')) reloadAll(); }}><Icon n="spark" size={16} />Mit KI überarbeiten</button>}
             </div>
-            {dirty && <p className="hint">Bitte zuerst speichern, dann einreichen.</p>}
-            {v.status === 'submitted' && v.submitted_by === user.id && <p className="hint">Sie haben diese Version eingereicht; die Freigabe muss eine andere Person übernehmen.</p>}
+            {dirty && <p className="hint">Bitte zuerst speichern.</p>}
+            {isCur && v.status === 'draft' && v.origin === 'manuell' && !can('approval:decide') && <p className="hint">Manuell angelegte Kriterien gibt eine andere Person frei.</p>}
             <h3>Entscheidungsverlauf</h3>
             {d.verlauf.length ? <ul>{d.verlauf.map((h: any, i: number) => <li key={i}><Tone tone={h.decision === 'approved' ? 'ok' : 'bad'}>{h.decision === 'approved' ? 'Freigegeben' : 'Abgelehnt'}</Tone> v{h.version} von {h.by}, {fmtTime(h.at)}{h.reason ? ` – ${h.reason}` : ''}{h.hints ? ` (Hinweis: ${h.hints})` : ''}</li>)}</ul> : <Empty>Noch keine Entscheidung.</Empty>}
           </section>
@@ -220,8 +224,8 @@ export function CriterionDetail() {
           <details className="card"><summary>Änderungsprotokoll (Audit)</summary>
             <Async s={audit}>{(a: any) => <div className="tablewrap"><table><thead><tr><th>Zeit</th><th>Wer</th><th>Aktion</th><th>Version</th><th>Grund / KI</th></tr></thead><tbody>{a.eintraege.map((e: any, i: number) => <tr key={i}><td>{fmtTime(e.at)}</td><td>{e.actor_label}{e.actor_kind === 'ki' && ' (KI)'}</td><td>{e.action}</td><td>{e.object_version ?? ''}</td><td>{e.reason ?? ''}{e.ai_model ? `Modell ${e.ai_model}, Prompt ${e.prompt_version}` : ''}</td></tr>)}</tbody></table></div>}</Async>
           </details>
-          {dialog === 'reject' && <ConfirmReason title="Version ablehnen" label="Begründung der Ablehnung" confirmLabel="Ablehnen" danger hintField onCancel={() => setDialog(null)} onConfirm={(r, h) => decide('rejected', r, h)} intro={<p>Die Version v{v.version} bleibt erhalten. Die Begründung ist Pflicht.</p>} />}
-          {dialog === 'approve' && <Modal title="Version freigeben" onClose={() => setDialog(null)}><p>Sie geben <strong>{d.objekt.code} v{v.version}</strong> frei. Die Freigabe gilt nur für diese Version.</p><div className="row"><button className="primary" disabled={busy} onClick={() => decide('approved')}>Freigeben</button><button onClick={() => setDialog(null)}>Abbrechen</button></div></Modal>}
+          {dialog === 'reject' && <ConfirmReason title="Kriterium ablehnen" label="Grund der Ablehnung" confirmLabel="Ablehnen und mit KI verbessern" danger hintField hintLabel="Was soll die KI verbessern? (Anweisung)" onCancel={() => setDialog(null)} onConfirm={(r, h) => decide('rejected', r, h)} intro={<p className="hint">Die KI erstellt daraus eine neue Version zur erneuten Prüfung. Die abgelehnte bleibt erhalten.</p>} />}
+          {dialog === 'approve' && <Modal title="Version freigeben" onClose={() => setDialog(null)}><p>Sie geben <strong>{d.objekt.code}</strong> frei. Es wird sofort Grundlage für Testfälle.</p><div className="row"><button className="primary" disabled={busy} onClick={() => decide('approved')}>Freigeben</button><button onClick={() => setDialog(null)}>Abbrechen</button></div></Modal>}
           {void toast}
         </>
       );

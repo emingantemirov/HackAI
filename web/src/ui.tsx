@@ -159,14 +159,14 @@ export function PageHead({ title, lead, actions }: { title: string; lead?: React
   return <div className="row spread" style={{ alignItems: 'flex-start' }}><div><h1>{title}</h1>{lead && <p className="lead">{lead}</p>}</div>{actions && <div className="row">{actions}</div>}</div>;
 }
 
-export function ConfirmReason({ title, label, confirmLabel, danger, minLength = 10, onCancel, onConfirm, hintField, intro }: { title: string; label: string; confirmLabel: string; danger?: boolean; minLength?: number; onCancel: () => void; onConfirm: (reason: string, hints?: string) => Promise<void> | void; hintField?: boolean; intro?: React.ReactNode }) {
+export function ConfirmReason({ title, label, confirmLabel, danger, minLength = 10, onCancel, onConfirm, hintField, hintLabel, intro }: { title: string; label: string; confirmLabel: string; danger?: boolean; minLength?: number; onCancel: () => void; onConfirm: (reason: string, hints?: string) => Promise<void> | void; hintField?: boolean; hintLabel?: string; intro?: React.ReactNode }) {
   const [reason, setReason] = useState(''); const [hints, setHints] = useState(''); const [busy, setBusy] = useState(false);
   const ok = reason.trim().length >= minLength;
   return (
     <Modal title={title} onClose={onCancel}>
       {intro}
       <Field id="reason" label={label} hint={`mindestens ${minLength} Zeichen`}><textarea value={reason} onChange={(e) => setReason(e.target.value)} aria-required="true" /></Field>
-      {hintField && <Field id="hints" label="Hinweise zur Verbesserung" hint="optional"><textarea value={hints} onChange={(e) => setHints(e.target.value)} /></Field>}
+      {hintField && <Field id="hints" label={hintLabel ?? 'Hinweise zur Verbesserung'} hint="optional"><textarea value={hints} onChange={(e) => setHints(e.target.value)} /></Field>}
       <div className="row"><button className={danger ? 'danger' : 'primary'} disabled={!ok || busy} onClick={async () => { setBusy(true); try { await onConfirm(reason.trim(), hints.trim() || undefined); } finally { setBusy(false); } }}>{confirmLabel}</button><button onClick={onCancel}>Abbrechen</button></div>
       {!ok && reason.length > 0 && <p className="hint">Bitte etwas ausführlicher begründen.</p>}
     </Modal>

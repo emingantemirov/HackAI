@@ -10,8 +10,8 @@ describe('Direkte Prüfung einzelner Kriterien', () => {
     const list = (await fb.get('/api/objects/criteria')).json.eintraege as any[];
     expect(list[0].created_at).toBeTruthy();
     const [a, b] = list;
-    expect((await fb.post(`/api/criteria/versions/${a.version_id}/review`, { decision: 'approved' })).status).toBe(403);
-    const ok = await pr.post(`/api/criteria/versions/${a.version_id}/review`, { decision: 'approved' });
+    expect((await c.as('kunde@demo.example').post(`/api/criteria/versions/${a.version_id}/review`, { decision: 'approved' })).status).toBe(403);
+    const ok = await fb.post(`/api/criteria/versions/${a.version_id}/review`, { decision: 'approved' });
     expect(ok.status, JSON.stringify(ok.json)).toBe(200);
     expect((await pr.get(`/api/objects/criteria/${a.object_id}`)).json.versionen[0].status).toBe('approved');
     expect((await pr.post(`/api/criteria/versions/${b.version_id}/review`, { decision: 'rejected', reason: 'kurz' })).status).toBe(400);

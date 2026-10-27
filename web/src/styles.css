@@ -185,3 +185,10 @@ mark.hit { background: #ffd54a; color: #000; }
 .fsel select:hover { background-color: var(--ink-2); }
 .fsel select option { color: var(--ink); background: #fff; }
 details > summary { cursor: pointer; }
+
+.spill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 999px; font-weight: 700; font-size: .92rem; white-space: nowrap; }
+.spill.wait { background: var(--amber-bg); color: var(--amber); } .spill.ok { background: var(--green-bg); color: var(--green); } .spill.bad { background: var(--red-bg); color: var(--red-d); }
+.spill.wait svg { animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+.review { border-left: 6px solid var(--line-2); }
+.review.s-wait { border-left-color: #e0a31b; } .review.s-ok { border-left-color: var(--green); } .review.s-bad { border-left-color: var(--red); }
