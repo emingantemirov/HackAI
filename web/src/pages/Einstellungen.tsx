@@ -83,6 +83,7 @@ function Ai() {
                 <button disabled={busy || !d.konfiguriert} onClick={async () => { const r = await run(() => api.post('/api/ai/test')); if (r) show(r); }}>Verbindung testen</button>
                 {d.schluesselQuelle === 'einstellungen' && <button className="ghost" disabled={busy} onClick={async () => { const r = await run(() => api.post('/api/ai/key', { key: '' }), 'Schlüssel entfernt.'); if (r) show(r); }}>Schlüssel entfernen</button>}
               </div></>}
+            {!writable && <p className="hint">Für diese Einstellung fehlt Ihrer Rolle die Berechtigung. Bitte mit einem Prüfer- oder Administratorkonto anmelden.</p>}
             {t && <div className={`banner ${t.state === 'verbunden' ? 'ok' : 'bad'}`} style={{ marginTop: 12 }} role="status"><strong>{t.state === 'verbunden' ? 'Verbindung erfolgreich.' : 'Verbindung nicht erfolgreich.'}</strong> {t.message ?? ''}</div>}
             <details style={{ marginTop: 12 }}><summary>Alternativ per .env-Datei</summary><p className="hint">Im Projektordner eine Datei <span className="mono">.env</span> mit der Zeile <span className="mono">HAI_API_KEY=…</span> anlegen und den Server neu starten. Die Datei wird nicht in Git aufgenommen.</p></details>
           </>

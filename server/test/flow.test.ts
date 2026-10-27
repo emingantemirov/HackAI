@@ -382,7 +382,7 @@ describe('Hessian AI', () => {
     const hai2 = new HaiClient({ ...c.cfg, hai: { ...c.cfg.hai, apiKey: null } }, c.db, fake);
     const app2 = await buildApp({ db: c.db, cfg: { ...c.cfg, hai: { ...c.cfg.hai, apiKey: null } }, hai: hai2 }); const as2 = mkAs(app2);
     expect((await as2(AD).get('/api/ai/status')).json.konfiguriert).toBe(false);
-    expect((await as2(FB).post('/api/ai/key', { key: 'x' })).status).toBe(403);
+    expect((await as2(KU).post('/api/ai/key', { key: 'x' })).status).toBe(403);
     const st = (await as2(AD).post('/api/ai/key', { key: 'portal-schluessel-nicht-echt' })).json;
     expect(st.state).toBe('verbunden'); expect(st.sample).toBe('Ja, die Verbindung funktioniert.');
     expect(seen.length).toBe(2); expect(seen[1].max).toBeGreaterThan(seen[0].max); expect(seen[0].auth).toBe('Bearer portal-schluessel-nicht-echt');
