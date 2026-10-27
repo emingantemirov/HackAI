@@ -10,12 +10,26 @@ Startumfang: Vorerkrankungsanfrage (Abgabegrund 41, Datenbaustein DBVO). Alle Da
 
 TypeScript-Monorepo (npm workspaces): `server` (Fastify, PostgreSQL, zod) und `web` (React, Vite). Dateispeicher auf der Platte, Migrationen als SQL in `server/src/migrations`.
 
-## Schnellstart
+## Schnellstart (ohne Datenbank-Installation)
 
-Voraussetzungen: Node 20+, PostgreSQL 14+.
+Voraussetzung: Node.js 20 oder neuer (https://nodejs.org, LTS). Mehr nicht.
 
 ```bash
+git clone https://github.com/emingantemirov/HackAI.git
+cd HackAI
 npm install
+npm run demo
+```
+
+Danach im Browser **http://localhost:3001** öffnen. Beim ersten Start werden Demo-Konten und Demo-Daten angelegt. Die Daten liegen im Ordner `storage/` und bleiben beim nächsten Start erhalten (zurücksetzen: Ordner `storage/` löschen).
+
+Windows/PowerShell: Falls `npm` meldet, die Ausführung von Skripten sei deaktiviert, einmalig `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` ausführen oder `npm.cmd` statt `npm` verwenden.
+
+Eingebettetes PostgreSQL (PGlite) führt alle Zugriffe nacheinander aus und ist für Demo und lokale Entwicklung gedacht. Für den Betrieb mit mehreren Nutzern: echter PostgreSQL-Server.
+
+## Mit eigenem PostgreSQL-Server
+
+```bash
 # Datenbank anlegen (einmalig)
 sudo -u postgres psql -c "create user eel with password 'eel_dev_password'" \
   -c "create database eel_pruefportal owner eel" -c "create database eel_pruefportal_test owner eel"
@@ -25,6 +39,8 @@ npm run build -w web                 # baut die Oberfläche nach web/dist
 npm run demo:reset                   # ACHTUNG: leert die Datenbank und lädt Demo-Daten (nur Entwicklung)
 WEB_DIST=web/dist DEMO_AI_MODE=true npm start     # http://localhost:3001
 ```
+
+Alternativ PostgreSQL per Docker: `docker run -d --name eel-db -p 5432:5432 -e POSTGRES_USER=eel -e POSTGRES_PASSWORD=eel_dev_password -e POSTGRES_DB=eel_pruefportal postgres:16`.
 
 Entwicklung mit Hot-Reload: `npm run dev:server` und `npm run dev:web` (Vite auf :5173, Proxy auf :3001).
 
@@ -43,7 +59,8 @@ Passwort für alle: `Demo-Passwort-2026!` (änderbar über `SEED_PASSWORD` beim 
 
 | Variable | Bedeutung | Standard |
 |---|---|---|
-| `DATABASE_URL` | PostgreSQL | lokale Entwicklungs-DB |
+| `DATABASE_URL` | PostgreSQL; ohne Angabe läuft das eingebettete PGlite in `STORAGE_DIR/pglite` (`pglite://memory` = nur im Speicher) | eingebettet |
+| `AUTO_DEMO` | `true`: bei leerer Datenbank Demo-Daten anlegen (`npm run demo` setzt es) | – |
 | `PORT` | HTTP-Port | 3001 |
 | `STORAGE_DIR` | Ablage für Originaldateien, Pakete, Importe | `./storage` |
 | `WEB_DIST` | Verzeichnis der gebauten Oberfläche | – (nur API) |
@@ -63,6 +80,7 @@ Der API-Schlüssel wird weder im Repository noch im Browser noch im Log geführt
 
 ```bash
 npm test                      # 45 Server-Tests (Datenbank, API, Fachregeln, Mandantentrennung)
+TEST_DATABASE_URL=pglite://memory npm test   # dieselben Tests ohne PostgreSQL-Server
 npm run test:e2e              # 12 Browser-Prüfungen; Server mit frischen Demo-Daten und WEB_DIST muss laufen
 ```
 

@@ -13,6 +13,7 @@
     "reset:demo": "ALLOW_RESET=true DEMO_AI_MODE=true tsx src/cli.ts reset && DEMO_AI_MODE=true tsx src/cli.ts seed --demo"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.5.12",
     "@fastify/cookie": "^11.0.0",
     "@fastify/multipart": "^9.0.0",
     "@fastify/static": "^8.0.0",

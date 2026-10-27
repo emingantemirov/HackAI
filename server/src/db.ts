@@ -13,7 +13,44 @@ export type Tx = pg.PoolClient;
 export type Q = Db | Tx;
 
 export function createPool(databaseUrl: string): Db {
+  if (databaseUrl.startsWith('pglite:')) return createEmbedded(databaseUrl.slice('pglite:'.length).replace(/^\/\//, '')) as unknown as Db;
   return new pg.Pool({ connectionString: databaseUrl, max: 10 });
+}
+
+/**
+ * Eingebettetes PostgreSQL (PGlite, WebAssembly): keine Datenbankinstallation nötig. Gleiche SQL-Syntax, Trigger und Constraints.
+ * PGlite kennt genau eine Verbindung; Zugriffe werden daher nacheinander ausgeführt (Transaktionen halten die Sperre bis zum Ende).
+ * Zum Betrieb mit mehreren Nutzern gleichzeitig ist ein echter PostgreSQL-Server (DATABASE_URL=postgres://…) vorgesehen.
+ */
+function createEmbedded(location: string) {
+  let ready: Promise<any> | null = null;
+  const open = () => (ready ??= (async () => {
+    const { PGlite } = await import('@electric-sql/pglite');
+    const dir = location === 'memory' || location === '' ? undefined : location;
+    if (dir) fs.mkdirSync(dir, { recursive: true });
+    return new PGlite(dir);
+  })());
+  let chain: Promise<void> = Promise.resolve();
+  const lock = async () => { let release!: () => void; const prev = chain; chain = new Promise<void>((r) => (release = r)); await prev; return release; };
+  const opts = { parsers: { 1082: (v: string) => v, 20: (v: string) => Number(v) } };
+  const run = async (conn: any, text: string, params?: unknown[]) => {
+    if (!params || params.length === 0) {
+      const res = await conn.exec(text, opts);
+      const last = res[res.length - 1] ?? { rows: [], affectedRows: 0 };
+      return { rows: last.rows, rowCount: last.rows.length || last.affectedRows || 0, fields: last.fields };
+    }
+    let r: any;
+    try { r = await conn.query(text, params.map((x) => (x === undefined ? null : x)), opts); } catch (e: any) { if (process.env.DEBUG_SQL) console.error('SQL-Fehler:', text.slice(0, 200), JSON.stringify(params).slice(0, 300)); throw e; }
+    return { rows: r.rows, rowCount: r.rows.length || r.affectedRows || 0, fields: r.fields };
+  };
+  return {
+    async query(text: string, params?: unknown[]) { const rel = await lock(); try { return await run(await open(), text, params); } finally { rel(); } },
+    async connect() {
+      const rel = await lock(); const conn = await open();
+      return { query: (text: string, params?: unknown[]) => run(conn, text, params), release: () => rel() };
+    },
+    async end() { const rel = await lock(); try { if (ready) await (await ready).close(); } finally { rel(); } },
+  };
 }
 
 /** Transaktion mit automatischem Rollback. Statusübergänge laufen immer in einer Transaktion. */

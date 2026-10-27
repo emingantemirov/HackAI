@@ -17,7 +17,7 @@ export interface R { status: number; json: any; raw: Buffer }
 
 export async function setup(opts: { demo?: boolean; fetchImpl?: typeof fetch; apiKey?: string } = {}): Promise<Ctx> {
   const storage = fs.mkdtempSync(path.join(os.tmpdir(), 'eel-test-'));
-  const cfg = loadConfig({ ...process.env, DATABASE_URL: TEST_DB, STORAGE_DIR: storage, DEMO_AI_MODE: 'true', HAI_API_KEY: opts.apiKey ?? '', LOG_LEVEL: 'silent' } as any);
+  const cfg = loadConfig({ ...process.env, DATABASE_URL: TEST_DB, STORAGE_DIR: storage, DEMO_AI_MODE: 'true', HAI_API_KEY: opts.apiKey ?? '', LOG_LEVEL: process.env.TEST_LOG ?? 'silent' } as any);
   const db = createPool(cfg.databaseUrl);
   await resetSchema(db); await migrate(db);
   await seedBase(db, PW);

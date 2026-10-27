@@ -16,6 +16,7 @@
     "start": "npm run start -w server",
     "test": "npm run test -w server",
     "demo:reset": "npm run reset:demo -w server",
-    "test:e2e": "node web/e2e/e2e.mjs"
+    "test:e2e": "node web/e2e/e2e.mjs",
+    "demo": "node scripts/demo.mjs"
   }
 }

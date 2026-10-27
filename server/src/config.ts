@@ -14,7 +14,8 @@ export interface AppConfig {
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   return {
-    databaseUrl: env.DATABASE_URL ?? 'postgres://eel:eel_dev_password@127.0.0.1:5432/eel_pruefportal',
+    // Ohne DATABASE_URL läuft das eingebettete PostgreSQL (PGlite) im Ordner STORAGE_DIR/pglite – keine Installation nötig.
+    databaseUrl: env.DATABASE_URL ?? `pglite://${path.resolve(env.STORAGE_DIR ?? './storage', 'pglite')}`,
     port: Number(env.PORT ?? 3001),
     storageDir: path.resolve(env.STORAGE_DIR ?? './storage'),
     sessionSecret: env.SESSION_SECRET ?? 'dev-only-change-me',

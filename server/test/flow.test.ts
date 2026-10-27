@@ -133,14 +133,14 @@ describe('Testfälle, Klärungen, Freigabe', () => {
   });
   it('Prüfpaket enthält Eingangsdaten, aber keine Soll-Ergebnisse', async () => {
     const pv = await fb.get(`/api/campaigns/${campaignId}/package/preview`);
-    expect(pv.json.preview.ok).toBe(true);
+    expect(pv.json.preview.ok, JSON.stringify(pv.json.preview.errors) + JSON.stringify(pv.json.excluded)).toBe(true);
     const mk = await fb.post(`/api/campaigns/${campaignId}/package`, {});
     expect(mk.status, JSON.stringify(mk.json)).toBe(200);
     const camp = (await fb.get(`/api/campaigns/${campaignId}`)).json;
     const dl = await fb.get(`/api/packages/${camp.pakete[0].id}/download`);
     const txt = dl.raw.toString('utf8');
     expect(txt).toContain('synthetisch'); expect(txt).not.toMatch(/"expected"|"soll"|erwartet":/i);
-    expect(camp.laeufe.every((l: any) => l.status === 'awaiting_return')).toBe(true);
+    expect(camp.laeufe.every((l: any) => l.status === 'awaiting_return'), JSON.stringify(camp.laeufe.map((l: any) => l.status)).slice(0, 150) + JSON.stringify(mk.json)).toBe(true);
   });
 });
 
