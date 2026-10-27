@@ -315,6 +315,22 @@ function DeriveResult({ r }: { r: any }) {
   );
 }
 
+function Working({ job }: { job: any }) {
+  const [sec, setSec] = useState(0);
+  useEffect(() => { const t = setInterval(() => setSec((x) => x + 1), 1000); return () => clearInterval(t); }, []);
+  const pct = job.total > 0 ? Math.round((job.progress / job.total) * 100) : 0;
+  return (
+    <div className="working" role="status" aria-live="polite">
+      <div className="spinner" aria-hidden="true" />
+      <div style={{ flex: 1 }}>
+        <strong>{job.message ?? 'KI arbeitet …'}</strong>
+        <div className="loadbar" aria-hidden="true"><i style={{ width: pct > 0 ? `${pct}%` : '30%' }} className={pct > 0 ? '' : 'indet'} /></div>
+        <div className="hint">{sec} s · das kann bei langen Dokumenten einige Minuten dauern</div>
+      </div>
+    </div>
+  );
+}
+
 function SourceDetail({ id, onClose, demo, auto }: { id: string; onClose: () => void; demo: boolean; auto?: boolean }) {
   const s = useAsync(() => api.get(`/api/sources/${id}`), [id]);
   const { can } = useAuth(); const { busy, run } = useAction();
@@ -351,7 +367,7 @@ function SourceDetail({ id, onClose, demo, auto }: { id: string; onClose: () => 
                 <button disabled={busy} onClick={() => derive('ki')}>Nur mit KI</button>
                 {demo && <button disabled={busy} onClick={() => derive('demo')}>Demo-Ableitung <DemoTag>Demo</DemoTag></button>}</div></details>
               {job && <div style={{ marginTop: 12 }} aria-live="polite">
-                {['queued', 'running'].includes(job.status) && <p><progress value={job.progress} max={Math.max(job.total, 1)} /> {job.message ?? 'läuft …'}</p>}
+                {['queued', 'running'].includes(job.status) && <Working job={job} />}
                 {job.status === 'failed' && <div className="banner bad" role="alert">{job.error}</div>}
                 {job.status === 'succeeded' && <DeriveResult r={job.result} />}
               </div>}

@@ -313,13 +313,37 @@ export async function deriveFromSource(o: DeriveOpts): Promise<DeriveResult> {
   } else if (o.mode === 'ki') {
     if (!o.hai.configured) throw new AiError('nicht_konfiguriert', 'Die KI-Verbindung ist nicht konfiguriert. Manuelle Bearbeitung oder der gekennzeichnete Demo-Modus bleiben möglich.');
     const existing = (await o.db.query('select slug from criteria where org_id = $1', [o.orgId])).rows.map((r) => r.slug as string);
-    const chunks = chunkText(sv.extracted_text, sv.locators, 6500).filter((c) => /Vorerkrank|Abgabegrund|DBVO|Arbeitsunfähig/i.test(c));
-    for (let i = 0; i < chunks.length; i++) {
-      await o.progress?.(i, chunks.length, `KI-Ableitung Abschnitt ${i + 1} von ${chunks.length} …`);
-      const { data: rawData, completion } = await o.hai.completeJson('kriterien-ableitung', PROMPTS.deriveCriteria, aiDeriveSchema, [
-        { role: 'system', content: deriveCriteriaSystem('Vorerkrankungsanfrage (Abgabegrund 41, Datenbaustein DBVO)') },
-        { role: 'user', content: deriveCriteriaUser(title, sv.version_label, chunks[i], [...existing, ...candidates.map((c) => c.draft.slug)]) },
-      ], 3500, o.orgId);
+    // Wenige, große Abschnitte statt vieler kleiner; nur die thematisch ergiebigsten (Reihenfolge des Dokuments bleibt). Mehrere Anfragen laufen parallel.
+    const score = (c: string) => (c.match(/Vorerkrank/gi)?.length ?? 0) * 3 + (c.match(/Abgabegrund|DBVO/gi)?.length ?? 0) * 2 + (c.match(/Arbeitsunfähig/gi)?.length ?? 0);
+    const all = chunkText(sv.extracted_text, sv.locators, 12000).map((c, idx) => ({ c, idx, sc: score(c) })).filter((x) => x.sc > 0);
+    const chunks = all.sort((x, y) => y.sc - x.sc).slice(0, 8).sort((x, y) => x.idx - y.idx).map((x) => x.c);
+    const baseSlugs = [...existing, ...candidates.map((c) => c.draft.slug)];
+    let doneN = 0; let lastErr: unknown = null; let failed = 0;
+    const results: { i: number; rawData: any; completion: any }[] = [];
+    let next = 0;
+    const worker = async () => {
+      while (next < chunks.length) {
+        const i = next++;
+        try {
+          const { data: rawData, completion } = await o.hai.completeJson('kriterien-ableitung', PROMPTS.deriveCriteria, aiDeriveSchema, [
+            { role: 'system', content: deriveCriteriaSystem('Vorerkrankungsanfrage (Abgabegrund 41, Datenbaustein DBVO)') },
+            { role: 'user', content: deriveCriteriaUser(title, sv.version_label, chunks[i], baseSlugs) },
+          ], 6000, o.orgId);
+          results.push({ i, rawData, completion });
+        } catch (e) {
+          if (e instanceof AiError && e.state === 'nicht_konfiguriert') throw e;
+          lastErr = e; failed++;
+        }
+        doneN++;
+        await o.progress?.(doneN, chunks.length, `KI analysiert Abschnitt ${Math.min(doneN + 1, chunks.length)} von ${chunks.length} …`);
+      }
+    };
+    await o.progress?.(0, chunks.length, `KI analysiert ${chunks.length} Abschnitte …`);
+    await Promise.all(Array.from({ length: Math.min(3, chunks.length) }, worker));
+    if (chunks.length && failed === chunks.length) throw lastErr;
+    if (failed) fehlend.push(`${failed} von ${chunks.length} Abschnitten konnten von der KI nicht ausgewertet werden (${lastErr instanceof Error ? lastErr.message : 'Fehler'}). Bitte die Ableitung später erneut starten.`);
+    results.sort((x, y) => x.i - y.i);
+    for (const { rawData, completion } of results) {
       const data = rawData as z.output<typeof aiDeriveSchema>;
       const meta = { model: completion.model, promptVersion: PROMPTS.deriveCriteria, derivedAt: new Date().toISOString(), sourceVersionId: sv.id, inputTokens: completion.usage.inputTokens, outputTokens: completion.usage.outputTokens };
       for (const c of data.criteria) {

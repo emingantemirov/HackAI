@@ -17,6 +17,7 @@ if ((process.env.AUTO_DEMO ?? '').toLowerCase() === 'true' && !(await db.query('
   console.log(`Demo-Daten angelegt. Anmeldung z. B. fachbearbeitung@demo.example / ${pw}`);
 }
 const hai = new HaiClient(cfg, db);
+await db.query(`update jobs set status = 'failed', error = 'Durch einen Neustart des Servers unterbrochen. Bitte erneut starten.', updated_at = now() where status in ('queued','running')`);
 await hai.loadKey();
 const app = await buildApp({ db, cfg, hai });
 await app.listen({ port: cfg.port, host: process.env.HOST ?? '0.0.0.0' });

@@ -160,10 +160,14 @@ export async function buildApp({ db, cfg, hai }: Deps): Promise<FastifyInstance>
   app.post('/api/sources/:id/derive', async (req) => {
     const a = staff(req); const { id } = req.params as { id: string }; requirePerm(a, 'ai:run');
     const b = z.object({ mode: z.enum(['auto', 'uebernahme', 'ki', 'demo']) }).parse(req.body);
+    // Läuft für diese Quelle schon eine Ableitung (jünger als 15 Min.), diese weiterverwenden; sonst frisch starten (nie ein altes Ergebnis wiederverwenden).
+    const run = await db.query(`select id from jobs where org_id = $1 and kind like 'ableitung:%' and idempotency_key like $2 and status in ('queued','running') and updated_at > now() - interval '15 minutes' limit 1`, [orgOf(a), `${id}:%`]);
+    if (run.rowCount) return { jobId: run.rows[0].id, reused: true };
+    const stamp = Date.now();
     if (b.mode === 'auto') {
       // Ein Knopf: KI, wenn verbunden; sonst die gekennzeichnete Demo-Ableitung (falls aktiv); sonst nur eingebettete Kriterien mit Original-ID.
       const pref = hai.configured ? 'ki' : cfg.demoAiMode ? 'demo' : 'uebernahme';
-      return startJob(db, { orgId: orgOf(a), kind: 'ableitung:auto', key: `${id}:${pref}`, userId: a.id, run: async (ctx) => {
+      return startJob(db, { orgId: orgOf(a), kind: 'ableitung:auto', key: `${id}:${pref}:${stamp}`, userId: a.id, run: async (ctx) => {
         const base = { db, cfg, hai, actor: a, orgId: orgOf(a), sourceVersionId: id, progress: ctx.progress };
         try { return await deriveFromSource({ ...base, mode: pref }); }
         catch (e) {
@@ -174,7 +178,7 @@ export async function buildApp({ db, cfg, hai }: Deps): Promise<FastifyInstance>
     }
     if (b.mode === 'demo' && !cfg.demoAiMode) throw conflict('DEMO_OFF', 'Der Demo-Modus ist nicht aktiviert (DEMO_AI_MODE=true). Er ersetzt die KI durch eine regelbasierte Ableitung und ist immer als Demo gekennzeichnet.');
     if (b.mode === 'ki' && !hai.configured) throw new AiError('nicht_konfiguriert', 'Die KI-Verbindung ist nicht konfiguriert. Nutzen Sie „Eingebettete Kriterien übernehmen“, den Demo-Modus oder legen Sie Kriterien manuell an.');
-    const r = await startJob(db, { orgId: orgOf(a), kind: 'ableitung:' + b.mode, key: id, userId: a.id, run: (ctx) => deriveFromSource({ db, cfg, hai, actor: a, orgId: orgOf(a), sourceVersionId: id, mode: b.mode as 'ki' | 'demo' | 'uebernahme', progress: ctx.progress }) });
+    const r = await startJob(db, { orgId: orgOf(a), kind: 'ableitung:' + b.mode, key: `${id}:${b.mode}:${stamp}`, userId: a.id, run: (ctx) => deriveFromSource({ db, cfg, hai, actor: a, orgId: orgOf(a), sourceVersionId: id, mode: b.mode as 'ki' | 'demo' | 'uebernahme', progress: ctx.progress }) });
     return r;
   });
   app.get('/api/jobs/:id', async (req) => { const a = staff(req); const j = await getJob(db, orgOf(a), (req.params as any).id); if (!j) throw notFound('Auftrag'); return j; });
