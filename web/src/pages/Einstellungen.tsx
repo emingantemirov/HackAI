@@ -77,7 +77,7 @@ function Ai() {
               {d.konfiguriert && <span className="hint"> Quelle: {d.schluesselQuelle === 'env' ? 'Umgebung / .env' : 'Einstellungen'}{d.anbieter ? ` · ${({ claude: 'Claude (Anthropic)', gemini: 'Google Gemini', groq: 'Groq' } as Record<string, string>)[d.anbieter] ?? 'Hessian AI'}` : ''}{d.model ? ` · Modell ${d.model}` : ''}</span>}</p>
             {d.message && !ok && <p className="hint">{d.message}</p>}
             {writable && <>
-              <Field id="ai-key" label="API-Schlüssel" hint="wird nur auf dem Server gespeichert und nie wieder angezeigt"><input type="password" autoComplete="off" spellCheck={false} value={key} onChange={(e) => setKey(e.target.value)} placeholder="AIza… (Google Gemini, kostenlos) · gsk_… (Groq) · sk-ant-… (Claude)" /></Field>
+              <Field id="ai-key" label="API-Schlüssel" hint="wird nur auf dem Server gespeichert und nie wieder angezeigt"><input type="password" autoComplete="off" spellCheck={false} value={key} onChange={(e) => setKey(e.target.value)} placeholder="AIza… / AQ.… (Google Gemini, kostenlos) · gsk_… (Groq) · sk-ant-… (Claude)" /></Field>
               <div className="row">
                 <button className="primary" disabled={busy || key.trim().length < 8} onClick={async () => { const r = await run(() => api.post('/api/ai/key', { key, ...(model.trim() ? { model: model.trim() } : {}) })); if (r) { setKey(''); show(r); } }}>Speichern und testen</button>
                 <button disabled={busy || !d.konfiguriert} onClick={async () => { const r = await run(() => api.post('/api/ai/test')); if (r) show(r); }}>Verbindung testen</button>
@@ -86,7 +86,7 @@ function Ai() {
             {!writable && <p className="hint">Für diese Einstellung fehlt Ihrer Rolle die Berechtigung. Bitte mit einem Prüfer- oder Administratorkonto anmelden.</p>}
             {t && <div className={`banner ${t.state === 'verbunden' ? 'ok' : 'bad'}`} style={{ marginTop: 12 }} role="status"><strong>{t.state === 'verbunden' ? 'Verbindung erfolgreich.' : 'Verbindung nicht erfolgreich.'}</strong> {t.message ?? ''}</div>}
             <details style={{ marginTop: 12 }}><summary>Kostenlosen Schlüssel bekommen</summary><ol className="hint">
-              <li><strong>Google Gemini (empfohlen):</strong> auf aistudio.google.com/apikey mit dem Google-Konto anmelden, „Create API key“ wählen und den Schlüssel (beginnt mit <span className="mono">AIza</span>) hier eintragen. Keine Kreditkarte nötig.</li>
+              <li><strong>Google Gemini (empfohlen):</strong> auf aistudio.google.com/apikey mit dem Google-Konto anmelden, „Create API key“ wählen und den Schlüssel (beginnt mit <span className="mono">AIza</span> oder <span className="mono">AQ.</span>) hier eintragen. Keine Kreditkarte nötig.</li>
               <li><strong>Groq:</strong> auf console.groq.com registrieren, unter „API Keys“ einen Schlüssel (<span className="mono">gsk_…</span>) erzeugen.</li></ol>
               <Field id="ai-model" label="Modell" hint="optional, nur falls der Standard abgelehnt wird"><input value={model} onChange={(e) => setModel(e.target.value)} placeholder="z. B. gemini-2.5-flash" /></Field></details>
             <details style={{ marginTop: 12 }}><summary>Alternativ per .env-Datei</summary><p className="hint">Im Projektordner eine Datei <span className="mono">.env</span> mit der Zeile <span className="mono">HAI_API_KEY=…</span> anlegen und den Server neu starten. Die Datei wird nicht in Git aufgenommen.</p></details>

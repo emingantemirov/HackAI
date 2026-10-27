@@ -61,7 +61,7 @@ export class HaiClient {
   /** Anbieter wird am Schlüssel erkannt: sk-ant- = Claude, AIza = Google Gemini (kostenlos nutzbar), gsk_ = Groq (kostenlos nutzbar), sonst Hessian AI. */
   get provider(): 'claude' | 'gemini' | 'groq' | 'hessian' {
     const k = this.apiKey ?? '';
-    return k.startsWith('sk-ant-') ? 'claude' : k.startsWith('AIza') ? 'gemini' : k.startsWith('gsk_') ? 'groq' : 'hessian';
+    return k.startsWith('sk-ant-') ? 'claude' : k.startsWith('AIza') || k.startsWith('AQ.') ? 'gemini' : k.startsWith('gsk_') ? 'groq' : 'hessian';
   }
   private storedModel: string | null = null;
   get model(): string {
