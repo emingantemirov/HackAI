@@ -9,44 +9,99 @@ const loc = (l: any) => (l ? `${l.kind === 'seite' ? 'Seite' : 'Absatz'} ${l.n}`
 export function Kriterien() {
   const [sp, setSp] = useSearchParams();
   const view = sp.get('ansicht') ?? 'kriterien';
-  const set = (k: string) => setSp(k === 'kriterien' ? {} : { ansicht: k });
-  const { staff } = useAuth();
-  void staff;
   return (
     <>
       <h1>Kriterien</h1>
-      <Tabs label="Bereiche der Kriterien" current={view} onChange={set} items={[['kriterien', 'Kriterien'], ['quellen', 'Quellen'], ['klaerungen', 'Offene Fragen']]} />
+      <Tabs label="Bereiche der Kriterien" current={view} onChange={(k) => setSp(k === 'kriterien' ? {} : { ansicht: k })} items={[['kriterien', 'Kriterien'], ['quellen', 'Quellen']]} />
       {view === 'kriterien' && <CriteriaList />}
       {view === 'quellen' && <Sources />}
-      {view === 'klaerungen' && <Clarifications />}
     </>
   );
 }
 
+const FILTER: [string, string][] = [['', 'Alle'], ['pruefen', 'Zu prüfen'], ['freigegeben', 'Freigegeben'], ['abgelehnt', 'Abgelehnt']];
+
+function FilterSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <label className="fsel"><span className="sr">Anzeigen</span>
+      <select value={value} onChange={(e) => onChange(e.target.value)} aria-label="Kriterien filtern">{FILTER.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
+    </label>
+  );
+}
+
+function ReviewCard({ c, onDone }: { c: any; onDone: () => void }) {
+  const { can } = useAuth(); const { busy, run } = useAction(); const toast = useToast();
+  const [rej, setRej] = useState(false); const [leaving, setLeaving] = useState(false);
+  const ev = (c.evidence as any[] | undefined)?.find((e) => e.verified);
+  const decide = can('approval:decide');
+  const approve = async () => {
+    const r: any = await run(() => api.post(`/api/criteria/versions/${c.version_id}/review`, { decision: 'approved' }));
+    if (r) { setLeaving(true); toast(`${c.code} freigegeben – ab jetzt Grundlage für Testfälle${r.testfaelle ? ` (${r.testfaelle} Testfall-Entwürfe angelegt)` : ''}.`); setTimeout(onDone, 300); }
+  };
+  return (
+    <article className={`review ${leaving ? 'gone' : ''}`} aria-label={`${c.code} ${c.title}`}>
+      <Icon n="list" size={22} />
+      <div>
+        <h3><Link to={`/kriterien/${c.object_id}`} style={{ color: 'inherit', textDecoration: 'none' }}>{c.title}</Link></h3>
+        <div className="hint"><span className="mono">{c.code}</span> · v{c.version} · {c.origin === 'ki-ableitung' ? 'KI-Entwurf' : c.origin === 'demo-ableitung' ? 'Demo-Entwurf' : c.origin === 'manuell' ? 'manuell' : 'aus Quelle'}{c.status === 'rejected' && ' · abgelehnt'}</div>
+      </div>
+      <div className="actions">
+        {c.status === 'rejected' ? <ReviseButton c={c} onDone={onDone} /> : decide ? <>
+          <button className="primary" disabled={busy} onClick={approve}><Icon n="check" size={16} />Freigeben</button>
+          <button className="danger" disabled={busy} onClick={() => setRej(true)}><Icon n="x" size={16} />Ablehnen</button></> : <span className="hint">Wartet auf Prüfer/Freigeber</span>}
+      </div>
+      <div className="body">
+        {c.rule && <p style={{ margin: '2px 0' }}>{c.rule}</p>}
+        {ev && <p className="hint" style={{ margin: '4px 0 0' }}>„{String(ev.quote).slice(0, 180)}{String(ev.quote).length > 180 ? '…' : ''}“</p>}
+      </div>
+      {rej && <ConfirmReason title="Kriterium ablehnen" label="Was soll geändert werden?" confirmLabel="Ablehnen und von KI überarbeiten lassen" danger minLength={10} onCancel={() => setRej(false)}
+        intro={<p className="hint">Ihre Begründung geht als Anweisung an die KI. Sie erzeugt daraus eine neue Version zur erneuten Prüfung; die abgelehnte bleibt erhalten.</p>}
+        onConfirm={async (reason) => {
+          const r: any = await run(() => api.post(`/api/criteria/versions/${c.version_id}/review`, { decision: 'rejected', reason }));
+          if (r) { setRej(false); toast(r.ueberarbeitet ? 'Abgelehnt. Die KI hat eine überarbeitete Version erstellt – bitte prüfen.' : r.hinweis, !r.ueberarbeitet); onDone(); }
+        }} />}
+    </article>
+  );
+}
+
+function ReviseButton({ c, onDone }: { c: any; onDone: () => void }) {
+  const { can } = useAuth(); const { busy, run } = useAction();
+  if (!can('ai:run')) return null;
+  return <button className="primary" disabled={busy} onClick={async () => { const r = await run(() => api.post(`/api/criteria/versions/${c.version_id}/ai-revise`), 'Die KI hat eine überarbeitete Version erstellt.'); if (r) onDone(); }}><Icon n="spark" size={16} />{busy ? 'KI überarbeitet …' : 'Mit KI überarbeiten'}</button>;
+}
+
 function CriteriaList() {
-  const { meta, can } = useAuth();
-  const [sp, setSp] = useSearchParams();
-  const status = sp.get('status') ?? ''; const [q, setQ] = useState('');
-  const s = useAsync(() => api.get(`/api/objects/criteria?${new URLSearchParams({ ...(status ? { status } : {}), ...(q ? { q } : {}) })}`), [status, q]);
-  const [newOpen, setNewOpen] = useState(false); const { busy, run } = useAction();
-  const drafts = (s.data?.eintraege ?? []).filter((c: any) => c.status === 'draft').length;
+  const { can } = useAuth();
+  const [sp, setSp] = useSearchParams(); const f = sp.get('filter') ?? '';
+  const s = useAsync(() => api.get('/api/objects/criteria'), []);
+  const [newOpen, setNewOpen] = useState(false);
   return (
     <>
-      {drafts > 0 && can('content:submit') && <div className="bulkbar"><span><strong>{drafts}</strong> Entwürfe bereit zur Freigabe</span><button className="accent" disabled={busy} onClick={async () => { const r: any = await run(() => api.post('/api/objects/criteria/submit-batch', {}), (x: any) => `${x.eingereicht} eingereicht${x.uebersprungen.length ? `, ${x.uebersprungen.length} übersprungen (siehe Kriterium)` : ''}.`); if (r) s.reload(); }}>Alle einreichen</button></div>}
-      <div className="card">
-        <div className="row spread">
-          <FilterChips options={meta.statusFilter} value={status} onChange={(v) => setSp(v ? { status: v } : {})} />
-          <div className="row"><div><label htmlFor="cq" className="hint">Suche</label><input id="cq" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Titel oder Kennung" style={{ width: 240 }} /></div>
-            {can('content:write') && <button className="primary" onClick={() => setNewOpen(true)}>Kriterium anlegen</button>}</div>
-        </div>
+      <div className="row spread" style={{ marginBottom: 14 }}>
+        <FilterSelect value={f} onChange={(v) => setSp(v ? { filter: v } : {})} />
+        {can('content:write') && <button className="ghost" onClick={() => setNewOpen(true)}><Icon n="plus" size={16} />Manuell anlegen</button>}
       </div>
-      <div className="card">
-        <Async s={s}>{(d: any) => d.eintraege.length === 0 ? <div className="empty"><strong>Noch keine Kriterien.</strong><Link className="btn primary" to="/kriterien?ansicht=quellen">Dokument hinzufügen</Link></div> : (
-          <div className="tablewrap"><table><caption className="sr">{d.eintraege.length} Kriterien</caption>
-            <thead><tr><th>Kennung</th><th>Titel</th><th>Stand</th><th>Status</th></tr></thead>
-            <tbody>{d.eintraege.map((c: any) => <tr key={c.object_id}><td className="mono">{c.code}</td><td><Link to={`/kriterien/${c.object_id}`}>{c.title}</Link></td><td className="hint">v{c.version}</td><td><Badge kind="obj" value={c.status} /></td></tr>)}</tbody></table></div>
-        )}</Async>
-      </div>
+      <Async s={s}>{(d: any) => {
+        const all: any[] = d.eintraege;
+        const stamp = (x: any) => String(x.created_at ?? '');
+        const open = all.filter((x) => ['draft', 'submitted', 'clarification', 'rejected'].includes(x.status)).sort((a, b) => stamp(b).localeCompare(stamp(a)) || b.code.localeCompare(a.code));
+        const toReview = open.filter((x) => x.status !== 'rejected'); const rejected = open.filter((x) => x.status === 'rejected');
+        const approved = all.filter((x) => x.status === 'approved');
+        const showOpen = f === '' || f === 'pruefen', showRej = f === '' || f === 'abgelehnt', showApp = f === '' || f === 'freigegeben';
+        if (all.length === 0) return <div className="card"><div className="empty"><Icon n="upload" size={40} /><strong>Noch keine Kriterien.</strong><Link className="btn primary" to="/kriterien?ansicht=quellen">Quelle hinzufügen</Link></div></div>;
+        return (
+          <>
+            {showOpen && (toReview.length ? <section aria-label="Zu prüfen"><h2>Zu prüfen <span className="pill-n">{toReview.length}</span></h2>{toReview.map((c) => <ReviewCard key={c.version_id} c={c} onDone={s.reload} />)}</section>
+              : f === 'pruefen' && <div className="card"><div className="empty"><Icon n="check" size={36} /><strong>Nichts mehr zu prüfen.</strong></div></div>)}
+            {showRej && rejected.length > 0 && <section aria-label="Abgelehnt"><h2>Abgelehnt <span className="pill-n" style={{ background: 'var(--muted)' }}>{rejected.length}</span></h2>{rejected.map((c) => <ReviewCard key={c.version_id} c={c} onDone={s.reload} />)}</section>}
+            {showApp && approved.length > 0 && (
+              <details className="card" open={f === 'freigegeben'}><summary><strong>Freigegeben</strong> <span className="badge ok">{approved.length}</span></summary>
+                <div className="tablewrap"><table><caption className="sr">Freigegebene Kriterien</caption><tbody>{approved.map((c) => <tr key={c.object_id}><td className="mono">{c.code}</td><td><Link to={`/kriterien/${c.object_id}`}>{c.title}</Link></td><td className="hint">v{c.version}</td></tr>)}</tbody></table></div>
+              </details>)}
+            {f === 'abgelehnt' && rejected.length === 0 && <div className="card"><div className="empty"><strong>Nichts abgelehnt.</strong></div></div>}
+          </>
+        );
+      }}</Async>
       {newOpen && <NewCriterion onClose={() => setNewOpen(false)} />}
     </>
   );
@@ -233,15 +288,11 @@ function AddSource({ onClose, onDone }: { onClose: () => void; onDone: (id?: str
 }
 
 function DeriveResult({ r }: { r: any }) {
-  const { can } = useAuth(); const { busy, run } = useAction(); const [done, setDone] = useState(false);
   return (
     <div className="stack">
       <p><Tone tone="ok">{r.neu.length} neue Kriterien</Tone> {r.geaendert.length > 0 && <Tone tone="info">{r.geaendert.length} aktualisiert</Tone>} {r.verworfen.length > 0 && <Tone tone="warn">{r.verworfen.length} verworfen</Tone>}</p>
       {r.hinweis && <p className="hint">{r.hinweis}</p>}
-      {(r.neu.length > 0 || r.geaendert.length > 0) && can('content:submit') && !done && <div className="row">
-        <button className="primary" disabled={busy} onClick={async () => { const x: any = await run(() => api.post('/api/objects/criteria/submit-batch', {}), (z: any) => `${z.eingereicht} Kriterien zur Freigabe eingereicht.`); if (x) setDone(true); }}>Alle zur Freigabe einreichen</button>
-        <Link className="btn" to="/kriterien">Erst ansehen</Link></div>}
-      {done && <Link className="btn accent" to="/freigaben">Weiter zu den Freigaben</Link>}
+      <Link className="btn accent" to="/kriterien">Kriterien prüfen und freigeben<Icon n="arrow" size={16} /></Link>
       {(r.widersprueche?.length > 0 || r.fehlendeInformationen?.length > 0 || r.verworfen.length > 0) && <details><summary>Details</summary>
         {r.widersprueche?.length > 0 && <ul>{r.widersprueche.map((w: any, i: number) => <li key={i}><strong>Widerspruch:</strong> {w.title}: {w.description}</li>)}</ul>}
         {r.fehlendeInformationen?.length > 0 && <ul>{r.fehlendeInformationen.map((w: string, i: number) => <li key={i}>Fehlt: {w}</li>)}</ul>}
@@ -311,48 +362,6 @@ function CompareSources({ list, onClose }: { list: any[]; onClose: () => void })
         {res.neu.length > 0 && <><h3>Neu</h3>{res.neu.map((t: string, i: number) => <p key={i} className="diff-after card">{t}</p>)}</>}
         {res.entfallen.length > 0 && <><h3>Entfallen</h3>{res.entfallen.map((t: string, i: number) => <p key={i} className="diff-before card">{t}</p>)}</>}
       </div>}
-    </Modal>
-  );
-}
-
-// ---------------- Klärungen ----------------
-function Clarifications() {
-  const s = useAsync(() => api.get('/api/clarifications'), []);
-  const { can } = useAuth(); const { busy, run } = useAction();
-  const [open, setOpen] = useState<any>(null);
-  return (
-    <>
-      <p className="hint">Stellen, an denen die Quellen offen oder widersprüchlich sind. Bis zur Entscheidung bleiben betroffene Soll-Ergebnisse gesperrt.</p>
-      <Async s={s}>{(d: any) => (
-        <>
-          {d.eintraege.length === 0 && <div className="card"><Empty>Es sind noch keine Klärungsvorgänge angelegt.</Empty>{can('content:write') && <button onClick={async () => { if (await run(() => api.post('/api/clarifications/ensure'), (x: any) => `${x.angelegt} Klärungsvorgänge angelegt.`)) s.reload(); }}>Klärungsvorgänge aus den Quellen anlegen</button>}</div>}
-          {d.eintraege.map((c: any) => (
-            <section className="card" key={c.id} aria-labelledby={`cl-${c.id}`}>
-              <div className="row spread"><h2 id={`cl-${c.id}`}>{c.code} · {c.title}</h2>{c.status === 'open' ? <Tone tone="warn">Offen</Tone> : <Tone tone="ok">Entschieden</Tone>}</div>
-              <p><Annot text={c.description} /></p>
-              {(c.source_refs as any[]).map((r, i) => <Quote key={i} q={r.quote} source={`${r.source_title ?? ''} ${r.locator ? '· ' + loc(r.locator) : ''}${r.verified ? '' : ' · Beleg in den vorliegenden Quellen nicht gefunden'}`} />)}
-              {c.status === 'resolved' && <div className="banner ok"><strong>Entscheidung:</strong> {(c.options as any[]).find((o) => o.key === c.decision_key)?.label ?? c.decision_key}<br />{c.decision_note} <span className="hint">– {c.decided_by_name}, {fmtTime(c.decided_at)}</span></div>}
-              {can('clarification:decide') && <button onClick={() => setOpen(c)}>{c.status === 'open' ? 'Entscheiden …' : 'Entscheidung ändern …'}</button>}
-            </section>
-          ))}
-          {open && <DecideClarification c={open} onClose={() => setOpen(null)} onDone={() => { setOpen(null); s.reload(); }} />}
-        </>
-      )}</Async>
-    </>
-  );
-}
-
-function DecideClarification({ c, onClose, onDone }: { c: any; onClose: () => void; onDone: () => void }) {
-  const [key, setKey] = useState(c.decision_key ?? ''); const [note, setNote] = useState(''); const { busy, run } = useAction();
-  return (
-    <Modal title={`${c.code}: Entscheidung dokumentieren`} onClose={onClose}>
-      <fieldset style={{ border: 0, padding: 0 }}><legend><strong>{c.title}</strong></legend>
-        {(c.options as any[]).map((o) => (
-          <label key={o.key} style={{ display: 'block', fontWeight: 400, padding: '8px 0' }}><input type="radio" name="opt" checked={key === o.key} onChange={() => setKey(o.key)} /> <strong>{o.label}</strong><br /><span className="hint">Folge: {o.consequence}</span></label>
-        ))}
-      </fieldset>
-      <Field id="cl-note" label="Anmerkung" hint="optional"><textarea value={note} onChange={(e) => setNote(e.target.value)} /></Field>
-      <button className="primary" disabled={busy || !key || false} onClick={async () => { if (await run(() => api.post(`/api/clarifications/${c.id}/decide`, { decisionKey: key, note }), 'Entscheidung dokumentiert.')) onDone(); }}>Entscheidung speichern</button>
     </Modal>
   );
 }

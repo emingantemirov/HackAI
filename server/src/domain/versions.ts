@@ -66,8 +66,8 @@ async function history(q: Q, type: ObjType, objectId: string) {
   return r.rows.map((x) => ({ decision: x.decision, version: x.version_number, reason: x.reason, hints: x.hints, at: x.decided_at, by: x.by }));
 }
 
-export async function submitForApproval(q: Q, actor: Actor, type: ObjType, versionId: string, extraChecks?: (v: any) => Promise<void>): Promise<any> {
-  requirePerm(actor, 'content:submit');
+export async function submitForApproval(q: Q, actor: Actor, type: ObjType, versionId: string, extraChecks?: (v: any) => Promise<void>, opts?: { systemDraft?: boolean }): Promise<any> {
+  if (!opts?.systemDraft) requirePerm(actor, 'content:submit');
   const t = TABLES[type];
   const v = await getVersion(q, type, versionId);
   if (v.org_id !== actor.orgId) throw notFound(t.label);
@@ -80,7 +80,7 @@ export async function submitForApproval(q: Q, actor: Actor, type: ObjType, versi
     if (open.rowCount) throw conflict('CLARIFICATION_REQUIRED', `Offene Klärung(en) blockieren die Einreichung: ${open.rows.map((r) => r.code).join(', ')}.`);
   }
   if (extraChecks) await extraChecks(v);
-  const upd = await q.query(`update ${t.ver} set status = 'submitted', submitted_by = $2, submitted_at = now() where id = $1 and status = 'draft' returning *`, [versionId, actor.id]);
+  const upd = await q.query(`update ${t.ver} set status = 'submitted', submitted_by = $2, submitted_at = now() where id = $1 and status = 'draft' returning *`, [versionId, opts?.systemDraft ? null : actor.id]);
   if (!upd.rowCount) throw conflict('CONCURRENT_CHANGE', 'Die Version wurde parallel geändert. Bitte neu laden.');
   await q.query(
     `insert into approval_decisions(org_id, object_type, object_id, version_id, version_number, decision, decided_by, history) values ($1,$2,$3,$4,$5,'submitted',$6,$7)`,

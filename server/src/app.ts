@@ -318,6 +318,31 @@ export async function buildApp({ db, cfg, hai }: Deps): Promise<FastifyInstance>
     }
     return out;
   });
+  // Direkte Prüfung eines Kriteriums-Entwurfs: Die KI bzw. die Ableitung hat den Entwurf erzeugt, der Mensch entscheidet.
+  // Freigeben macht das Kriterium sofort für Testfälle aktiv. Ablehnen braucht eine Begründung; danach überarbeitet die KI den Entwurf als neue Version.
+  app.post('/api/criteria/versions/:vid/review', async (req) => {
+    const a = staff(req); requirePerm(a, 'approval:decide'); const { vid } = req.params as any;
+    const b = z.object({ decision: z.enum(['approved', 'rejected']), reason: z.string().optional() }).parse(req.body);
+    const decided = await tx(db, async (t) => {
+      const v = (await t.query(`select v.*, c.org_id from criteria_versions v join criteria c on c.id = v.criterion_id where v.id = $1`, [vid])).rows[0];
+      if (!v || v.org_id !== orgOf(a)) throw notFound('Kriterium');
+      if (v.status === 'draft') {
+        // Von der Ableitung (KI, Demo, Übernahme) erzeugte Entwürfe: die prüfende Person ist die erste menschliche Instanz. Manuell verfasste Entwürfe behalten das Vier-Augen-Prinzip.
+        const system = v.origin !== 'manuell';
+        await submitForApproval(t, a, 'criterion', vid, submitChecks('criterion', t) as any, { systemDraft: system });
+      }
+      return decide(t, a, 'criterion', { versionId: vid, decision: b.decision, reason: b.reason }, async (x) => { await onCriterionApproved(t, a, orgOf(a), x); await refreshImpactStatus(t, orgOf(a)); });
+    });
+    if (b.decision === 'approved') {
+      let testfaelle = 0;
+      if (can(a, 'content:write')) { try { const g = await tx(db, (t) => generateLibrary(t, a, orgOf(a))); testfaelle = g.angelegt.length + g.neueVersion.length; } catch { /* manuell möglich */ } }
+      return { ok: true, testfaelle };
+    }
+    // Abgelehnt: KI überarbeitet anhand der Begründung (neue Version, die abgelehnte bleibt erhalten).
+    if (!hai.configured || !can(a, 'ai:run')) return { ok: true, ueberarbeitet: false, hinweis: 'Abgelehnt. Die KI ist nicht verbunden – bitte manuell überarbeiten oder den Schlüssel in den Einstellungen eintragen.' };
+    try { const nv = await reviseRejectedAi(db, hai, a, orgOf(a), decided.id); return { ok: true, ueberarbeitet: true, version: nv.version }; }
+    catch (e: any) { return { ok: true, ueberarbeitet: false, hinweis: `Abgelehnt. Die KI-Überarbeitung ist fehlgeschlagen: ${e?.message ?? 'unbekannter Fehler'}` }; }
+  });
   app.post('/api/criteria/versions/:vid/ai-revise', async (req) => { const a = staff(req); return reviseRejectedAi(db, hai, a, orgOf(a), (req.params as any).vid); });
   app.get('/api/approvals', async (req) => { const a = staff(req); const q = z.object({ art: z.enum(['criterion', 'testcase', 'report']).optional() }).parse(req.query); return { eintraege: await listApprovalQueue(db, orgOf(a), q.art) }; });
 

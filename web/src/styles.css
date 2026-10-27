@@ -180,3 +180,8 @@ mark.hit { background: #ffd54a; color: #000; }
 .tabs a { padding: 8px 16px; border-radius: 999px; text-decoration: none; color: var(--muted); font-weight: 600; transition: background var(--t), color var(--t); }
 .tabs a:hover { background: var(--neutral-bg); color: var(--ink); }
 .tabs a.active, .tabs button[aria-selected="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.fsel { position: relative; display: inline-block; }
+.fsel select { appearance: none; -webkit-appearance: none; background: var(--ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center; color: #fff; border: 0; border-radius: 999px; padding: 10px 40px 10px 20px; font-weight: 600; font-size: .98rem; cursor: pointer; min-width: 170px; transition: background-color var(--t); }
+.fsel select:hover { background-color: var(--ink-2); }
+.fsel select option { color: var(--ink); background: #fff; }
+details > summary { cursor: pointer; }
