@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
+const state={workspace:{settings:{language:'en'},unseen:{requirement:['new'],workflow_case:['w|b']}},workflow:{items:[]}};
+const ctx={state,e:v=>String(v??''),icon:()=>'<svg/>',btn:()=>'',flowPhases:[],flowNames:{},labels:{approved:'Freigegeben',pending:'Prüfung offen'}};vm.createContext(ctx);
+const source=fs.readFileSync('auditflow/static/controls.js','utf8');vm.runInContext(source.slice(0,source.indexOf('function uxInit()')),ctx);
+const items=[{id:'old',title:'Z',status:'approved'},{id:'new',title:'A',status:'pending',hidden:true}];
+ctx.uxView('requirements').status='approved';assert.equal(ctx.uxItems('requirements',items)[0].id,'old');
+Object.assign(ctx.uxView('requirements'),{status:'all',fresh:'new'});assert.equal(ctx.uxItems('requirements',items)[0].id,'new');
+Object.assign(ctx.uxView('requirements'),{fresh:'all',visibility:'visible'});assert.equal(ctx.uxItems('requirements',items)[0].id,'old');
+Object.assign(ctx.uxView('requirements'),{visibility:'all',sort:'title'});assert.equal(ctx.uxItems('requirements',items)[0].title,'A');
+Object.assign(ctx.uxView('requirements'),{sort:'unread'});assert.equal(ctx.uxItems('requirements',items)[0].id,'new');
+ctx.uxView('cases').sort='unread';assert.equal(ctx.uxItems('cases',[{id:'a',workflow_id:'w'},{id:'b',workflow_id:'w'}])[0].id,'b');
+assert.ok(ctx.uxEntry('requirement','new').includes('ux-new-dot'));assert.ok(!ctx.uxEntry('requirement','old').includes('ux-new-dot'));
+assert.ok(!ctx.uxEntry('requirement','new').includes('type="checkbox"'));ctx.uxView('requirements').editing=true;assert.ok(ctx.uxEntry('requirement','new').includes('type="checkbox"'));
+const systemNode={nodeValue:'Anforderungen',parentElement:{closest:()=>null}},documentNode={nodeValue:'Anforderungen',parentElement:{closest:()=>({})}};
+ctx.document={body:{},createTreeWalker(){let i=0;return {nextNode:()=>[systemNode,documentNode][i++]||null}},querySelectorAll:()=>[]};ctx.NodeFilter={SHOW_TEXT:4};
+vm.runInContext(fs.readFileSync('auditflow/static/locale.js','utf8'),ctx);ctx.uxTranslate();assert.equal(systemNode.nodeValue,'Requirements');assert.equal(documentNode.nodeValue,'Anforderungen');state.workspace.settings.language='de';ctx.uxTranslate();assert.equal(systemNode.nodeValue,'Anforderungen');
+const attrs={'aria-expanded':'true'},toggle={classList:{contains:n=>n==='sidebar-toggle'},getAttribute:n=>attrs[n],setAttribute:(n,v)=>attrs[n]=v};ctx.document.querySelectorAll=()=>[toggle];state.workspace.settings.language='en';ctx.uxTranslate();assert.equal(attrs['aria-label'],'Hide navigation');attrs['aria-expanded']='false';ctx.uxTranslate();assert.equal(attrs['aria-label'],'Show navigation');state.workspace.settings.language='de';ctx.uxTranslate();assert.equal(attrs['aria-label'],'Navigation einblenden');
+console.log('Controls contracts passed: status/new/visibility filters, sorting, edit-only checkboxes, unread dots and UI-only reversible translation.');
