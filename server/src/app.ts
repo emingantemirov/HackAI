@@ -99,8 +99,9 @@ export async function buildApp({ db, cfg, hai }: Deps): Promise<FastifyInstance>
   app.get('/api/ai/status', async (req) => { staff(req); return { ...(await hai.lastStatus()), konfiguriert: hai.configured, anbieter: hai.provider, schluesselQuelle: hai.keySource, demoModus: cfg.demoAiMode }; });
   app.post('/api/ai/key', async (req) => {
     const a = A(req); requirePerm(a, 'settings:write');
-    const b = z.object({ key: z.string().trim().max(500) }).parse(req.body);
+    const b = z.object({ key: z.string().trim().max(500), model: z.string().trim().max(120).optional() }).parse(req.body);
     await hai.setKey(b.key || null);
+    if (b.model !== undefined) await hai.setModel(b.model || null); else if (!b.key) await hai.setModel(null);
     await audit(db, { actor: a, orgId: orgOf(a), action: b.key ? 'ki.schluessel_hinterlegt' : 'ki.schluessel_entfernt', objectType: 'settings' });
     return hai.testConnection();
   });

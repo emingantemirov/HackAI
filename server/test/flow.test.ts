@@ -435,4 +435,13 @@ describe('Hessian AI', () => {
     expect(seen!.headers['x-api-key']).toBe('sk-ant-test-nicht-echt'); expect(seen!.headers['anthropic-version']).toBeTruthy();
     expect(seen!.body.messages[0].role).toBe('user');
   });
+
+  it('Gemini-/Groq-Schlüssel nutzen die jeweilige OpenAI-kompatible Schnittstelle', async () => {
+    const urls: string[] = [];
+    const fakeFetch = (async (url: string) => { urls.push(url); return new Response(JSON.stringify({ model: 'm', choices: [{ message: { content: 'Ja.' }, finish_reason: 'stop' }], usage: {} }), { status: 200 }); }) as any;
+    for (const [key, prov, host] of [['AIza-test', 'gemini', 'generativelanguage.googleapis.com'], ['gsk_test', 'groq', 'api.groq.com']] as const) {
+      const h = new HaiClient({ ...c.cfg, hai: { ...c.cfg.hai, apiKey: key } }, c.db, fakeFetch);
+      expect(h.provider).toBe(prov); expect((await h.testConnection()).state).toBe('verbunden'); expect(urls.at(-1)).toContain(host);
+    }
+  });
 });

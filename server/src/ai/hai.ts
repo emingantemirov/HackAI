@@ -49,6 +49,8 @@ export class HaiClient {
   async loadKey(): Promise<void> {
     const r = await this.db.query(`select value from app_settings where key = 'hai_api_key'`).catch(() => ({ rows: [] as any[] }));
     this.storedKey = typeof r.rows[0]?.value === 'string' && r.rows[0].value ? r.rows[0].value : null;
+    const m = await this.db.query(`select value from app_settings where key = 'ai_model'`).catch(() => ({ rows: [] as any[] }));
+    this.storedModel = typeof m.rows[0]?.value === 'string' && m.rows[0].value ? m.rows[0].value : null;
   }
   async setKey(key: string | null): Promise<void> {
     if (key) await this.db.query(`insert into app_settings(key, value) values ('hai_api_key', $1) on conflict (key) do update set value = $1, updated_at = now()`, [JSON.stringify(key.trim())]);
@@ -56,10 +58,34 @@ export class HaiClient {
     this.storedKey = key ? key.trim() : null;
   }
   get configured(): boolean { return !!this.apiKey; }
-  /** Schlüssel, die mit „sk-ant-“ beginnen, gehören zu Claude (Anthropic); alle anderen zur OpenAI-kompatiblen Hessian-AI-Schnittstelle. */
-  get provider(): 'claude' | 'hessian' { return (this.apiKey ?? '').startsWith('sk-ant-') ? 'claude' : 'hessian'; }
-  get model(): string { return this.provider === 'claude' ? (process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5') : this.cfg.hai.model; }
-  get baseUrl(): string { return this.provider === 'claude' ? (process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com') : this.cfg.hai.baseUrl; }
+  /** Anbieter wird am Schlüssel erkannt: sk-ant- = Claude, AIza = Google Gemini (kostenlos nutzbar), gsk_ = Groq (kostenlos nutzbar), sonst Hessian AI. */
+  get provider(): 'claude' | 'gemini' | 'groq' | 'hessian' {
+    const k = this.apiKey ?? '';
+    return k.startsWith('sk-ant-') ? 'claude' : k.startsWith('AIza') ? 'gemini' : k.startsWith('gsk_') ? 'groq' : 'hessian';
+  }
+  private storedModel: string | null = null;
+  get model(): string {
+    if (this.storedModel) return this.storedModel;
+    switch (this.provider) {
+      case 'claude': return process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5';
+      case 'gemini': return process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+      case 'groq': return process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+      default: return this.cfg.hai.model;
+    }
+  }
+  get baseUrl(): string {
+    switch (this.provider) {
+      case 'claude': return process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com';
+      case 'gemini': return 'https://generativelanguage.googleapis.com/v1beta/openai';
+      case 'groq': return 'https://api.groq.com/openai/v1';
+      default: return this.cfg.hai.baseUrl;
+    }
+  }
+  async setModel(model: string | null): Promise<void> {
+    if (model) await this.db.query(`insert into app_settings(key, value) values ('ai_model', $1) on conflict (key) do update set value = $1, updated_at = now()`, [JSON.stringify(model.trim())]);
+    else await this.db.query(`delete from app_settings where key = 'ai_model'`);
+    this.storedModel = model ? model.trim() : null;
+  }
 
   private async request(messages: { role: string; content: string }[], maxTokens: number, signal?: AbortSignal): Promise<AiCompletion> {
     if (!this.apiKey) throw new AiError('nicht_konfiguriert', 'Die KI-Verbindung ist nicht konfiguriert. Bitte den API-Schlüssel unter Einstellungen → KI eintragen.');
